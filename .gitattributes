@@ -1,0 +1,8 @@
+*.sh text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.asp text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.gz binary
+src/shadowsocks/bin/* binary

@@ -3,6 +3,13 @@
 # fancyss script for asuswrt/merlin based router with software center
 
 source /koolshare/scripts/base.sh
+# This maintained package is intentionally limited to the reviewed device.
+MAINTENANCE_MODEL="$(nvram get odmpid)"
+[ -n "${MAINTENANCE_MODEL}" ] || MAINTENANCE_MODEL="$(nvram get productid)"
+if [ "${MAINTENANCE_MODEL}" != "RT-AC3100" ]; then
+	echo '此维护包仅支持 RT-AC3100，安装已停止。'
+	exit 1
+fi
 NEW_PATH=$(echo $PATH|tr ':' '\n'|sed '/opt/d;/mmc/d'|awk '!a[$0]++'|tr '\n' ':'|sed '$ s/:$//')
 export PATH=${NEW_PATH}
 MODEL=
@@ -2030,6 +2037,7 @@ install_now(){
 	# dbus value
 	echo_date "设置插件安装参数..."
 	dbus set ss_basic_version_local="${PLVER}"
+	dbus set fss_ac3100_version="$(/koolshare/bin/jq -r '.version' /koolshare/ss/maintenance.json)"
 	dbus set softcenter_module_${module}_version="${PLVER}"
 	dbus set softcenter_module_${module}_install="4"
 	dbus set softcenter_module_${module}_name="${module}"

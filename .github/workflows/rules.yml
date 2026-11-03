@@ -1,0 +1,23 @@
+name: Prepare rule update
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.12'
+      - run: python tools/update_rules.py --apply
+      - run: python -m unittest discover -s tests -v
+      - run: git diff --binary > rule-update.patch
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: review-rule-update
+          include-hidden-files: true
+          path: |
+            rule-update.patch
+            .cache/rule-update-report.json

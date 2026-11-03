@@ -678,7 +678,9 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
-<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=compat1"></script>
+<script type="text/javascript" src="/res/ac3100-version.js"></script>
+<script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.0"></script>
+<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=ac3100-0.1.0"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/softcenter.js"></script>
@@ -7411,6 +7413,7 @@ function save() {
 	}
 }
 function push_data_ws(script, arg, obj, flag, ws_cmd){
+	if (script == "ss_rule_update.sh") return push_data(script, arg, obj, flag);
 	var id = parseInt(Math.random() * 100000000);
 	var postData;
 	var resolvedWsCmd = ws_cmd || "";
@@ -7622,6 +7625,8 @@ function get_text_file_poll_state(key){
 }
 function clear_text_file_poll_state(key){
 	var state = textFilePollStates[key];
+	delete textFilePollStates[key];
+	if (state && state.xhr) state.xhr.abort();
 	if (state && state.timer){
 		clearTimeout(state.timer);
 	}
@@ -7648,6 +7653,7 @@ function note_text_file_poll_progress(state, response){
 }
 function poll_text_file(opts){
 	var key = opts.key;
+	if (opts.reset) clear_text_file_poll_state(key);
 	var state = get_text_file_poll_state(key);
 	if (opts.reset){
 		state.responseLen = -1;
@@ -7658,14 +7664,16 @@ function poll_text_file(opts){
 			state.timer = null;
 		}
 	}
-	$.ajax({
+	state.xhr = $.ajax({
 		url: opts.url,
 		type: opts.type || "GET",
 		dataType: opts.dataType || "text",
 		async: true,
 		cache: false,
-		timeout: opts.timeout,
+		timeout: opts.timeout || 8000,
 		success: function(response) {
+			if (textFilePollStates[key] !== state) return;
+			state.xhr = null;
 			state.attempt++;
 			var result = opts.onSuccess ? opts.onSuccess(response, state) : null;
 			if (result && result.done === false){
@@ -7679,6 +7687,8 @@ function poll_text_file(opts){
 			}
 		},
 		error: function(xhr) {
+			if (textFilePollStates[key] !== state) return;
+			state.xhr = null;
 			state.attempt++;
 			var result = opts.onError ? opts.onError(xhr, state) : null;
 			if (result && result.done === false){
@@ -7708,13 +7718,14 @@ function push_data(script, arg, obj, flag){
 		data: JSON.stringify(postData),
 		dataType: "json",
 		beforeSend: function() {
-			if (actionProfile.logMode == "realtime") {
+			if (actionProfile.logMode == "realtime" && script != "ss_rule_update.sh") {
 				E('log_content3').value = "";
 				schedule_realtime_log_start(actionProfile.logDelay);
 			}
 		},
 		success: function(response){
 			if(response.result == id){
+				if (script == "ss_rule_update.sh") schedule_realtime_log_start(100);
 				if(flag && flag == "1"){
 					refreshpage();
 				}else if(flag && flag == "2"){
@@ -13167,20 +13178,9 @@ function updatelist(arg) {
 	push_data("ss_rule_update.sh", arg,  dbus_post);
 }
 function version_show() {
-	if(!db_ss["ss_basic_version_local"]) db_ss["ss_basic_version_local"] = "0.0.0"
-	$("#ss_version_show").html("<a class='hintstyle' href='javascript:void(0);'><i>当前版本：" + db_ss['ss_basic_version_local'] + "</i></a>");
-	$.ajax({
-		url: 'https://raw.githubusercontent.com/hq450/fancyss/3.0/packages/version.json.js',
-		type: 'GET',
-		dataType: 'json',
-		success: function(res) {
-			if (typeof(res["version"]) != "undefined" && res["version"].length > 0) {
-				if (versionCompare(res["version"], db_ss["ss_basic_version_local"])) {
-					$("#updateBtn").html("<i>升级到：" + res.version + "</i>");
-				}
-			}
-		}
-	});
+    var version = window.FANCYSS_AC3100.version;
+    $("#ss_version_show").text("RT-AC3100 维护版 " + version + "（上游 3.5.30）");
+    $("#updateBtn").text("维护版升级说明");
 }
 function message_show() {
 	// Local-only notices: no remote advertising feed.
@@ -13194,11 +13194,10 @@ function scroll_msg() {
 	}
 }
 function update_ss() {
-	var dbus_post = {};
-	db_ss["ss_basic_action"] = "7";
-	push_data("ss_update.sh", "update", dbus_post);
+    layer.msg("请使用维护项目生成的 arm_lite 安装包，通过软件中心离线升级。", {time:6000});
 }
 function tabSelect(w) {
+	if (w !== 10 && mainLogViewer) mainLogViewer.stop();
 	for (var i = 0; i <= 10; i++) {
 		$('.show-btn' + i).removeClass('active');
 		$('#tablet_' + i).hide();
@@ -14248,59 +14247,37 @@ function switch_log_view(type) {
 	get_log();
 	return false;
 }
+var mainLogViewer = null;
 function get_log() {
-	if (!is_ws_available()){
-		get_log_httpd();
-		return false;
-	}
-	wsl = new WebSocket("ws://" + hostname + ":803/");
-	wsl.onopen = function() {
-		E('log_content1').value = "";
-		wsl.send("cat " + get_current_log_ws_file());
-	};
-	wsl.onerror = function(event) {
-		get_log_httpd();
-	};
-	wsl.onmessage = function(event) {
-		if(event.data != "XU6J03M6"){
-			E('log_content1').value += event.data + '\n';
-		}else{
-			E("log_content1").scrollTop = E("log_content1").scrollHeight;
-			wsl.close();
-		}
-	};
+    if (!mainLogViewer) mainLogViewer = FssLogViewer.create({
+        isActive: function() { return E("tablet_10").style.display !== "none" && !document.hidden; },
+        setTimer: function(fn, delay) { return setTimeout(fn, delay); },
+        clearTimer: function(timer) { clearTimeout(timer); },
+        request: function(view, success, failure) {
+            return $.ajax({type:"POST", url:"/_api/", dataType:"json", cache:false, timeout:8000,
+                data:JSON.stringify({id:Math.floor(Math.random()*100000000),method:"ss_log.sh",params:["read",view],fields:{}}),
+                success:function(response) {
+                    try { success(typeof response.result === "string" ? JSON.parse(response.result) : response.result); }
+                    catch (error) { failure(); }
+                }, error:failure});
+        },
+        render: function(text, snapshot) {
+            var area=E("log_content1"), follow=area.scrollHeight-area.scrollTop-area.clientHeight < 50;
+            if (area.value !== text) area.value=text || "暂无日志。";
+            if (follow) area.scrollTop=area.scrollHeight;
+            $("#ac3100_log_status").text(snapshot.truncated ? "显示最近 2000 行 / 128 KiB；每 1.5 秒刷新" : "每 1.5 秒自动刷新");
+        },
+        error: function(message) { $("#ac3100_log_status").text(message); }
+    });
+    mainLogViewer.start(current_log_view);
 }
-function get_log_httpd() {
-	poll_text_file({
-		key: "main_log",
-		reset: true,
-		url: get_current_log_http_path(),
-		dataType: 'html',
-		onSuccess: function(response, state) {
-			var retArea = E("log_content1");
-			if (response.search("XU6J03M6") != -1) {
-				retArea.value = response.myReplace("XU6J03M6", " ");
-				var pageH = parseInt(E("FormTitle").style.height.split("px")[0]); 
-				if(pageH){
-					autoTextarea(E("log_content1"), 0, (pageH - 308));
-				}else{
-					autoTextarea(E("log_content1"), 0, 980);
-				}
-				return {done: true};
-			}
-			note_text_file_poll_progress(state, response);
-			if (state.noChange > 5 || E("tablet_9").style.display == "none"){
-				return {done: true};
-			}
-			retArea.value = response;
-			return {done: false, delay: 100};
-		},
-		onError: function(xhr) {
-			E("log_content1").value = get_current_log_empty_text();
-			return {done: true};
-		}
-	});
-}
+function get_log_httpd() { return get_log(); }
+document.addEventListener("visibilitychange", function() {
+    if (document.hidden) { if (mainLogViewer) mainLogViewer.stop(); }
+    else if (E("tablet_10") && E("tablet_10").style.display !== "none") get_log();
+});
+window.addEventListener("beforeunload", function() { if (mainLogViewer) mainLogViewer.stop(); });
+
 function get_realtime_log() {
 	poll_text_file({
 		key: "realtime_log",
@@ -14324,7 +14301,7 @@ function get_realtime_log() {
 			}
 			retArea.value = response.myReplace("XU6J03M6", " ");
 			retArea.scrollTop = retArea.scrollHeight;
-			return {done: false, delay: 100};
+			return {done: false, delay: 1000};
 		},
 		onError: function() {
 			return {done: false, delay: 500};
@@ -16701,6 +16678,7 @@ function toggleKeyMask(o, show){
 												</table>
 											</div>
 											<div id="tablet_10" style="display: none;">
+												<div id="ac3100_log_status" style="padding:8px;color:#ccc;">正在读取日志…</div>
 												<div id="log_content" style="overflow:hidden;">
 													<textarea cols="63" rows="36" wrap="on" readonly="readonly" id="log_content1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 												</div>
