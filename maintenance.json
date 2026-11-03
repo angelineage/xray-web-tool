@@ -1,9 +1,9 @@
 {
   "name": "fancyss-ac3100",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "upstream_version": "3.5.30",
   "upstream_commit": "b19e82cb6a05e08990a96905353921819d44d134",
   "target": {"model": "RT-AC3100", "arch": "arm", "edition": "lite", "kernel": "2.6.36"},
-  "rules_base_url": "",
-  "release_repository": ""
+  "rules_base_url": "https://raw.githubusercontent.com/angelineage/fancyss-ac3100/main/src/shadowsocks/ss/rules",
+  "release_repository": "angelineage/fancyss-ac3100"
 }

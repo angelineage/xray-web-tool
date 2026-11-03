@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — 2026-11-04
+
+- 接入个人公开仓库 `angelineage/fancyss-ac3100`。
+- 配置经典规则在线源，gfwlist、chnlist、chnroute 从维护仓库读取并校验。
+- 保留 `v0.1.0` 基准标签，后续接入修改单独发版。
+
 ## 0.1.0 — 2026-11-03
 
 - 基于 fancyss 3.5.30，单独维护 RT-AC3100 arm_lite。
