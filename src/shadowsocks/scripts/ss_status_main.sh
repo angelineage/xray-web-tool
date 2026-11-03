@@ -3,6 +3,7 @@
 # fancyss script for asuswrt/merlin based router with software center
 
 source /koolshare/scripts/ss_base.sh
+source /koolshare/scripts/ss_probe_lib.sh
 
 LOGFILE_F=/tmp/upload/ssf_status.txt
 LOGFILE_C=/tmp/upload/ssc_status.txt
@@ -377,7 +378,12 @@ main(){
 		# exit loop when fancyss not enabled
 		[ "$(dbus get ss_basic_enable)" != "1" ] && exit
 		
-		if ! ps | grep -E "/koolshare/bin/status-tool daemon" | grep -v grep >/dev/null 2>&1; then
+		if fss_probe_legacy_kernel; then
+			status_daemon_pattern="ss_status_curl.sh daemon"
+		else
+			status_daemon_pattern="/koolshare/bin/status-tool daemon"
+		fi
+		if ! ps w | grep -F "${status_daemon_pattern}" | grep -v grep >/dev/null 2>&1; then
 			sh /koolshare/scripts/ss_status_daemon.sh restart >/dev/null 2>&1
 		fi
 

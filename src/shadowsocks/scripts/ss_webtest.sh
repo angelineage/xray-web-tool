@@ -3,6 +3,8 @@
 # fancyss script for asuswrt/merlin based router with software center
 
 source /koolshare/scripts/ss_base.sh
+source /koolshare/scripts/ss_probe_lib.sh
+source /koolshare/scripts/ss_webtest_curl.sh
 source /koolshare/scripts/ss_webtest_gen.sh
 LOGTIME1=⌚$(TZ=UTC-8 date -R "+%H:%M:%S")
 TMP2=/tmp/fancyss_webtest
@@ -436,6 +438,8 @@ wt_webtest_tool_import_results() {
 		(.results // [])[] |
 		if .state == "ok" and (.latency_ms != null) then
 			"\(.id)>\(.latency_ms)"
+		elif (.state == "dns" or .state == "connect" or .state == "tls" or .state == "http" or .state == "proxy" or .state == "unavailable" or .state == "invalid_url") then
+			"\(.id)>\(.state)"
 		elif .state == "timeout" then
 			"\(.id)>timeout"
 		elif .state == "stopped" then
@@ -518,7 +522,7 @@ wt_try_webtest_tool_batch() {
 	local target_count=0
 	local timeout_secs=0
 
-	webtest_tool="$(wt_pick_webtest_tool 2>/dev/null)" || return 1
+	webtest_tool="$(wt_pick_webtest_tool 2>/dev/null)" || webtest_tool=""
 	[ -f "${pairs_file}" ] || return 1
 	target_count=$(wc -l < "${pairs_file}" | tr -d ' ')
 	[ -n "${target_count}" ] || target_count=0
@@ -527,6 +531,8 @@ wt_try_webtest_tool_batch() {
 	: > "${live_result_file}"
 	wt_webtest_tool_build_job "${pairs_file}" "${job_file}" "${output_json}" "${output_stream}" "${WT_XRAY_THREADS}" "${batch_tag}" "${live_result_file}" "${live_stream_file}" || return 1
 	timeout_secs=$(wt_calc_batch_timeout_secs "${target_count}" "${WT_XRAY_THREADS}" 0 3000 1 2)
+	# The compatibility runner is serial: allow startup plus three bounded probes.
+	[ "${timeout_secs}" -ge $((target_count * 25 + 10)) ] || timeout_secs=$((target_count * 25 + 10))
 	cat > "${follower_script}" <<-EOF
 		#!/bin/sh
 		last_lines=0
@@ -539,7 +545,7 @@ wt_try_webtest_tool_batch() {
 			current_lines=\$(wc -l < "${live_stream_file}" 2>/dev/null)
 			[ -n "\${current_lines}" ] || current_lines=0
 			if [ "\${current_lines}" -gt "\${last_lines}" ]; then
-				sed -n "$((last_lines + 1)),\${current_lines}p" "${live_stream_file}" 2>/dev/null | while IFS= read -r line
+				sed -n "\$((last_lines + 1)),\${current_lines}p" "${live_stream_file}" 2>/dev/null | while IFS= read -r line
 				do
 					[ -n "\${line}" ] || continue
 					[ "\${line}" = "__FSS_WEBTEST_FOLLOWER_STOP__" ] && continue
@@ -576,7 +582,7 @@ wt_try_webtest_tool_batch() {
 	chmod +x "${follower_script}"
 	"${follower_script}" >/dev/null 2>&1 &
 	follower_pid="$!"
-	"${webtest_tool}" run --config "${job_file}" >/dev/null 2>&1 &
+	wt_run_webtest_job "${webtest_tool}" "${job_file}" >"${job_file}.runner.log" 2>&1 &
 	daemon_pid="$!"
 	if ! wt_wait_pid_with_timeout "${daemon_pid}" "${timeout_secs}"; then
 		kill -9 "${daemon_pid}" >/dev/null 2>&1 || true
@@ -713,7 +719,7 @@ wt_try_webtest_tool_targets_batch() {
 	local target_count=0
 	local timeout_secs=0
 
-	webtest_tool="$(wt_pick_webtest_tool 2>/dev/null)" || return 1
+	webtest_tool="$(wt_pick_webtest_tool 2>/dev/null)" || webtest_tool=""
 	[ -f "${targets_file}" ] || return 1
 	target_count=$(wc -l < "${targets_file}" | tr -d ' ')
 	[ -n "${target_count}" ] || target_count=0
@@ -722,6 +728,7 @@ wt_try_webtest_tool_targets_batch() {
 	: > "${live_result_file}"
 	wt_webtest_tool_build_targets_job "${targets_file}" "${job_file}" "${output_json}" "${output_stream}" "${concurrency}" "${batch_tag}" "${live_result_file}" "${live_stream_file}" || return 1
 	timeout_secs=$(wt_calc_batch_timeout_secs "${target_count}" "${concurrency}" 5000 3000 1 2)
+	[ "${timeout_secs}" -ge $((target_count * 25 + 10)) ] || timeout_secs=$((target_count * 25 + 10))
 	awk -F '|' '{print $1}' "${targets_file}" > "${nodes_file}"
 	wt_set_batch_state_from_file "${nodes_file}" "queued..." ""
 	cat > "${follower_script}" <<-EOF
@@ -736,7 +743,7 @@ wt_try_webtest_tool_targets_batch() {
 			current_lines=\$(wc -l < "${live_stream_file}" 2>/dev/null)
 			[ -n "\${current_lines}" ] || current_lines=0
 			if [ "\${current_lines}" -gt "\${last_lines}" ]; then
-				sed -n "$((last_lines + 1)),\${current_lines}p" "${live_stream_file}" 2>/dev/null | while IFS= read -r line
+				sed -n "\$((last_lines + 1)),\${current_lines}p" "${live_stream_file}" 2>/dev/null | while IFS= read -r line
 				do
 					[ -n "\${line}" ] || continue
 					[ "\${line}" = "__FSS_WEBTEST_FOLLOWER_STOP__" ] && continue
@@ -773,7 +780,7 @@ wt_try_webtest_tool_targets_batch() {
 	chmod +x "${follower_script}"
 	"${follower_script}" >/dev/null 2>&1 &
 	follower_pid="$!"
-	"${webtest_tool}" run --config "${job_file}" >/dev/null 2>&1 &
+	wt_run_webtest_job "${webtest_tool}" "${job_file}" >"${job_file}.runner.log" 2>&1 &
 	daemon_pid="$!"
 	if ! wt_wait_pid_with_timeout "${daemon_pid}" "${timeout_secs}"; then
 		kill -9 "${daemon_pid}" >/dev/null 2>&1 || true
@@ -1223,7 +1230,7 @@ wt_latency_state_is_transient() {
 
 wt_latency_state_is_terminal() {
 	case "$1" in
-	failed|timeout|ns|stopped|canceled)
+	failed|timeout|ns|stopped|canceled|dns|connect|tls|http|proxy|unavailable|invalid_url)
 		return 0
 		;;
 	esac
@@ -1438,7 +1445,7 @@ wt_abort_batch_run() {
 		cp -f "${WT_WEBTEST_STATE_FILE}" "${old_state}"
 		awk -F '>' -v reason="${reason}" '
 			function terminal(v) {
-				return (v ~ /^[0-9]+$/ || v == "failed" || v == "timeout" || v == "ns" || v == "stopped" || v == "canceled")
+				return (v ~ /^[0-9]+$/ || v == "failed" || v ~ /^(dns|connect|tls|http|proxy|unavailable|invalid_url)$/ || v == "timeout" || v == "ns" || v == "stopped" || v == "canceled")
 			}
 			{
 				val = $2
@@ -1497,7 +1504,7 @@ wt_request_stop_batch() {
 		cp -f "${WT_WEBTEST_STATE_FILE}" "${old_state}"
 		awk -F '>' '
 			function terminal(v) {
-				return (v ~ /^[0-9]+$/ || v == "failed" || v == "timeout" || v == "ns" || v == "stopped" || v == "canceled")
+				return (v ~ /^[0-9]+$/ || v == "failed" || v ~ /^(dns|connect|tls|http|proxy|unavailable|invalid_url)$/ || v == "timeout" || v == "ns" || v == "stopped" || v == "canceled")
 			}
 			{
 				val = $2
@@ -2948,7 +2955,7 @@ get_webtest_usable_count(){
 		return 0
 	}
 	awk -F '>' '
-		$1 != "stop" && ($2 == "failed" || $2 == "timeout" || $2 == "ns" || $2 == "stopped" || $2 == "canceled" || $2 ~ /^[0-9]+$/) {count++}
+		$1 != "stop" && ($2 == "failed" || $2 ~ /^(dns|connect|tls|http|proxy|unavailable|invalid_url)$/ || $2 == "timeout" || $2 == "ns" || $2 == "stopped" || $2 == "canceled" || $2 ~ /^[0-9]+$/) {count++}
 		END {print count + 0}
 	' "${webtest_file}" 2>/dev/null
 }

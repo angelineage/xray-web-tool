@@ -270,8 +270,6 @@ body .shunt-editor-layer .layui-layer-btn a{border-radius:5px !important;}
 .submgr-card-btn.sync{background:linear-gradient(135deg,#159957,#38d27a);}
 .submgr-card-btn.sync.disabled{background:linear-gradient(135deg,#6b7280,#9ca3af);color:#eef2f7;box-shadow:none;cursor:not-allowed;pointer-events:none;}
 .submgr-empty{padding:34px 22px;border:1px dashed rgba(255,255,255,0.1);border-radius:5px;background:rgba(18,24,34,0.44);color:#9fb6d1;line-height:1.9;text-align:center;}
-.submgr-empty-ad{display:block;margin-top:10px;padding:12px 14px;border-radius:5px;background:linear-gradient(135deg,rgba(255,140,0,0.22),rgba(255,62,62,0.2));border:1px solid rgba(255,140,0,0.35);color:#ffd166 !important;font-weight:700;line-height:1.8;text-decoration:none;box-shadow:0 12px 26px rgba(255,94,0,0.12);}
-.submgr-empty-ad strong{color:#ff7b00;}
 .node-card-shell{width:750px;overflow:hidden;}
 .node-card-sections{display:flex;flex-direction:column;gap:10px;padding:12px 10px 4px 2px;box-sizing:border-box;}
 .node-card-sections::-webkit-scrollbar{width:8px;height:8px;}
@@ -680,7 +678,7 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
-<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js"></script>
+<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=compat1"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/softcenter.js"></script>
@@ -767,7 +765,6 @@ var statusHistorySnapshotBuffer = "";
 var hostname = document.domain;
 var lan_ipaddr = '<% nvram_get("lan_ipaddr"); %>';
 var mouse_status;
-var ads_url_1
 var ws_enable = 1;
 var node_form_defaults = null;
 var single_test_wait = {};
@@ -5562,7 +5559,7 @@ function get_subscription_schedule_label(itemOrDay, hour) {
 }
 function render_subscription_profiles_cards() {
 	if (!subscribeProfilesState.length) {
-		return '<div class="submgr-empty">当前还没有订阅配置。<br />点击下方“新增订阅”开始创建机场级配置。<a class="submgr-empty-ad" target="_blank" href="https://123s.co/#/register?code=yf6ozeEO">🚀没有订阅地址？试试 <strong>ssLinks</strong> 机场，全中转 / 多国线路 / 流媒体解锁，优惠码: fancyss</a></div>';
+		return '<div class="submgr-empty">当前还没有订阅配置。<br />点击下方“新增订阅”开始创建机场级配置。</div>';
 	}
 	var html = '<div class="submgr-card-list">';
 	for (var i = 0; i < subscribeProfilesState.length; i++) {
@@ -12017,7 +12014,7 @@ function is_latency_transient_state(value){
 }
 function is_latency_terminal_state(value){
 	value = String(value || "");
-	return $.isNumeric(value) || value == "failed" || value == "timeout" || value == "ns" || value == "stopped" || value == "canceled";
+	return $.isNumeric(value) || /^(dns|connect|tls|http|proxy|unavailable|invalid_url)$/.test(String(value)) || value == "failed" || value == "timeout" || value == "ns" || value == "stopped" || value == "canceled";
 }
 function update_latency_action_links() {
 	if (!is_latency_feature_enabled()) {
@@ -12907,6 +12904,20 @@ function write_webtest(ps){
 		}else{
 			if(lag == "failed"){
 				test_result = '<font color="#FF0000">failed!</font>';
+			}else if(lag == "dns"){
+				test_result = '<font color="#FF0000">DNS解析失败</font>';
+			}else if(lag == "connect"){
+				test_result = '<font color="#FF0000">连接失败</font>';
+			}else if(lag == "tls"){
+				test_result = '<font color="#FF0000">TLS校验失败</font>';
+			}else if(lag == "http"){
+				test_result = '<font color="#FF0000">HTTP响应异常</font>';
+			}else if(lag == "proxy"){
+				test_result = '<font color="#FF0000">代理握手失败</font>';
+			}else if(lag == "unavailable"){
+				test_result = '<font color="#FF0000">检测工具不可用</font>';
+			}else if(lag == "invalid_url"){
+				test_result = '<font color="#FF0000">检测地址无效</font>';
 			}else if(lag == "timeout"){
 				test_result = '<font color="#FF0000">timeout!</font>';
 			}else if(lag == "ns"){
@@ -13172,74 +13183,8 @@ function version_show() {
 	});
 }
 function message_show() {
-	if (db_ss["ss_close_mesg"] == "0") return
-	$.ajax({
-		url: 'https://gist.githubusercontent.com/hq450/001dd0617a64e11a9492dcf9205a0e03/raw/fancyss_msg.json?_=' + new Date().getTime(),
-		type: 'GET',
-		dataType: 'json',
-		cache: false,
-		success: function(res) {
-			if (res["ads_url_1"] && res["ads_des_1"]){
-				ads_url_1 = res["ads_url_1"];
-				ads_des_1 = res["ads_des_1"];
-				if (node_nu == 0 && poped == 0) pop_node_add_ads();
-				if(!E("ss_online_links").value){
-					sub_ads_html = '<a target="_blank" href="' + ads_url_1 + '"><em>' + ads_des_1 + '</em></a>';
-					$('#ss_sub_ads').html(sub_ads_html)
-				}
-			}else{
-				if (node_nu == 0 && poped == 0) pop_node_add();
-			}
-			var rand_1 = parseInt(Math.random() * 100)
-			if (res["msg_1"] && res["switch_1"]){
-				if (rand_1 < res["switch_1"]){
-					if (versionCompare(res["version"], db_ss["ss_basic_version_local"])) {
-						$("#fixed_msg").append('<li id="msg_1" style="list-style: none;height:23px">' + res["msg_1"] + '</li>');
-					}
-				}
-			}
-			if (res["msg_2"] && res["switch_2"]){
-				if (rand_1 < res["switch_2"]){
-					$("#fixed_msg").append('<li id="msg_2" style="list-style: none;height:23px">' + res["msg_2"] + '</li>');
-				}
-			}
-			var ads_count = 0;
-			var rand_2 = parseInt(Math.random() * 100)
-			for(var i = 3; i < 10; i++){
-				if (res["msg_" + i] && res["switch_" + i]){
-					if (rand_2 < res["switch_" + i]){
-						$("#scroll_msg").append('<li id="msg_' + i + '" style="list-style: none;height:23px">' + res["msg_" + i] + '</li>');
-						ads_count++;
-					}
-				}
-			}
-			if (ads_count == 0) return;
-			if (ads_count <= 2){
-				$("#scroll_msg").css("height", (ads_count * 23) + "px");
-				return;
-			}
-			if (res["scroll_line"]){
-				$("#scroll_msg").css("height", (res["scroll_line"] * 23) + "px");
-			}else{
-				$("#scroll_msg").css("height", "23px");
-			}
-			$("#scroll_msg").on("mouseover", function() {
-				stop_scroll = 1;
-			});
-			$("#scroll_msg").on("mouseleave", function() {
-				stop_scroll = 0;
-			});
-			if (res["ads_time"]){
-				setInterval(scroll_msg, res["ads_time"]);
-			}else{
-				setInterval(scroll_msg, 5000);
-			}
-		},
-		error: function(XmlHttpRequest, textStatus, errorThrown){
-			console.log(XmlHttpRequest.responseText);
-			if (node_nu == 0 && poped == 0) pop_node_add();
-		}
-	});
+	// Local-only notices: no remote advertising feed.
+	if (node_nu == 0 && poped == 0) pop_node_add();
 }
 function scroll_msg() {
 	if(stop_scroll == 0) {
@@ -13841,7 +13786,7 @@ function get_ss_status_front_httpd() {
 		async: true,
 		cache: false,
 		dataType: "json",
-		timeout: Math.max(12000, get_status_refresh_delay_ms() + 4000),
+		timeout: Math.max(35000, get_status_refresh_delay_ms() + 4000),
 		data: JSON.stringify(postData),
 		success: function(apiResponse) {
 			var payload = "";
@@ -13854,7 +13799,7 @@ function get_ss_status_front_httpd() {
 		},
 		error: function() {
 			if (!statusFrontHasValidPayload) {
-				set_ss_status_waiting("Waiting ...");
+				set_ss_status_waiting("状态读取失败，正在重试...");
 			}
 		},
 		complete: function() {
@@ -13876,7 +13821,7 @@ function get_ss_status_front_websocket() {
 	}
 	statusFrontPending = true;
 	var statusMode = (typeof db_ss["ss_basic_status_mode"] == "undefined" || db_ss["ss_basic_status_mode"] === "") ? "serve" : String(db_ss["ss_basic_status_mode"]);
-	status_front_ws_direct = (statusMode == "serve");
+	status_front_ws_direct = false;
 	clear_front_status_ws_watchdog();
 	statusFrontWsWatchdog = setTimeout(function() {
 		statusFrontPending = false;
@@ -13887,14 +13832,10 @@ function get_ss_status_front_websocket() {
 		} else {
 			get_ss_status_front_httpd();
 		}
-	}, 25000);
+	}, 35000);
 	setup_status_ws(get_ss_status_front_httpd, false, function() {
 		try {
-			if (status_front_ws_direct) {
-				wss.send("/koolshare/bin/statusctl --socket-path /tmp/status-tool.sock probe-once");
-			} else {
-				wss.send("/koolshare/scripts/ss_status.sh ws");
-			}
+			wss.send("sh /koolshare/scripts/ss_status.sh ws");
 		} catch (ex) {
 			throw ex;
 		}
@@ -16618,7 +16559,6 @@ function toggleKeyMask(o, show){
 															{ title: '节点订阅设置', thead:'1'},
 															{ title: '订阅地址管理<br><br><font color="#ffcc00">支持SS/SSR/V2ray/Xray/Trojan</font>', multi: [
 																{ id:'ss_online_links', type:'textarea', hint:'116', rows:'12', ph:ph1},
-																{ suffix: '<span id="ss_sub_ads"></span>' },
 															]},
 															{ title: '订阅节点模式设定', id:'ssr_subscribe_mode', type:'select', style:'width:auto', options:option_modes, value:'2'},
 															{ title: 'hysteria2订阅设置', multi: [

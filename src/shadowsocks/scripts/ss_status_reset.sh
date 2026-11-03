@@ -3,6 +3,7 @@
 # fancyss script for asuswrt/merlin based router with software center
 
 source /koolshare/scripts/base.sh
+source /koolshare/scripts/ss_probe_lib.sh
 eval $(dbus export ss_failover)
 alias echo_date='echo 【$(TZ=UTC-8 date -R +%Y%m%d\ %X)】:'
 
@@ -102,6 +103,10 @@ stop_status_runtime() {
 }
 
 start_status_runtime() {
+	if fss_probe_legacy_kernel; then
+		sh /koolshare/scripts/ss_status_daemon.sh start
+		return $?
+	fi
 	[ -x "${STATUS_TOOL_BIN}" ] || return 1
 	local chn_url=""
 	local frn_url=""

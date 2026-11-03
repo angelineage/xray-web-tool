@@ -3,6 +3,7 @@
 STATUS_HTTP_ID="$1"
 
 source /koolshare/scripts/ss_base.sh
+source /koolshare/scripts/ss_probe_lib.sh
 
 if [ -n "${STATUS_HTTP_ID}" ];then
 	ACTION="${STATUS_HTTP_ID}"
@@ -24,7 +25,7 @@ STATUS_WS_LOCK_MAX_AGE=60
 STATUS_HTTP_LOCK_MAX_AGE=20
 STATUS_CACHE_MAX_AGE=120
 STATUS_CTL_TIMEOUT=8
-STATUS_ONCE_TIMEOUT=15
+STATUS_ONCE_TIMEOUT=8
 
 LOGTIME=$(TZ=UTC-8 date -R "+%Y-%m-%d %H:%M:%S")
 HEART_STATUS=$(dbus get ss_heart_beat)
@@ -359,32 +360,34 @@ prepare(){
 		set_waiting_status
 		return 1
 	fi
-	if [ "${ss_failover_enable}" != "1" ] && ! status_socks5_ready;then
-		set_waiting_status
-		return 1
-	fi
 	return 0
 }
 
 resolve_payload(){
 	local payload=""
+	if fss_probe_legacy_kernel; then
+		sh /koolshare/scripts/ss_status_curl.sh
+		return $?
+	fi
 	if payload="$(read_front_cache)"; then
 		printf '%s' "${payload}"
 		return 0
 	fi
 	if status_tool_bin="$(pick_status_tool)"; then
-		if payload="$(refresh_payload_once "${status_tool_bin}")"; then
+		if payload="$(refresh_payload_once "${status_tool_bin}")" && status_payload_matches_mode "${payload}"; then
 			printf '%s' "${payload}"
 			return 0
 		fi
 	fi
-	set_waiting_status
-	get_status_payload
-	return 0
+	sh /koolshare/scripts/ss_status_curl.sh
 }
 
 resolve_payload_once_only(){
 	local payload=""
+	if fss_probe_legacy_kernel; then
+		sh /koolshare/scripts/ss_status_curl.sh
+		return $?
+	fi
 	if [ "$(status_probe_mode)" = "serve" ];then
 		ensure_status_serve_runtime >/dev/null 2>&1 || true
 		if payload="$(refresh_payload_via_ctl)"; then
@@ -395,19 +398,14 @@ resolve_payload_once_only(){
 			printf '%s' "${payload}"
 			return 0
 		fi
-		set_waiting_status
-		get_status_payload
-		return 0
 	fi
 	if status_tool_bin="$(pick_status_tool)"; then
-		if payload="$(refresh_payload_once "${status_tool_bin}")"; then
+		if payload="$(refresh_payload_once "${status_tool_bin}")" && status_payload_matches_mode "${payload}"; then
 			printf '%s' "${payload}"
 			return 0
 		fi
 	fi
-	set_waiting_status
-	get_status_payload
-	return 0
+	sh /koolshare/scripts/ss_status_curl.sh
 }
 
 if [ -z "$1" ] && [ -z "$2" ];then

@@ -1,6 +1,7 @@
 #!/bin/sh
 
 source /koolshare/scripts/ss_base.sh
+source /koolshare/scripts/ss_probe_lib.sh
 
 STATUS_TOOL_BIN="/koolshare/bin/status-tool"
 STATUS_DAEMON_PIDFILE="/var/run/status-tool.pid"
@@ -68,6 +69,10 @@ ensure_waiting_cache() {
 }
 
 start_status_daemon() {
+	if fss_probe_legacy_kernel; then
+		env TZ="$(status_tool_tz)" start-stop-daemon -S -q -b -m -p "${STATUS_DAEMON_PIDFILE}" -x /bin/sh -- /koolshare/scripts/ss_status_curl.sh daemon
+		return $?
+	fi
 	[ -x "${STATUS_TOOL_BIN}" ] || return 1
 	local chn_url
 	local frn_url
@@ -105,6 +110,8 @@ status_probe_mode() {
 }
 
 start_status_serve() {
+	# Old kernels use on-demand curl probes; no incompatible serve process.
+	fss_probe_legacy_kernel && return 0
 	[ -x "${STATUS_TOOL_BIN}" ] || return 1
 	local chn_url
 	local frn_url

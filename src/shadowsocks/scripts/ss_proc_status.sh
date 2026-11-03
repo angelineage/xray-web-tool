@@ -3,6 +3,7 @@
 # fancyss script for asuswrt/merlin based router with software center
 
 source /koolshare/scripts/ss_base.sh
+source /koolshare/scripts/ss_probe_lib.sh
 [ -f /koolshare/scripts/ss_subscribe_profile_lib.sh ] && source /koolshare/scripts/ss_subscribe_profile_lib.sh
 
 run(){
@@ -739,7 +740,13 @@ if [ "${current_type}" == "1" ]; then
 	fi
 
 	status_tool_mode="$(GET_STATUS_TOOL_MODE)"
-	if [ -n "${status_tool_mode}" ]; then
+	if fss_probe_legacy_kernel; then
+		if [ "${ss_failover_enable}" = "1" ]; then
+			echo "curl-compat\t兼容模式\t\t状态探测(后台监测)"
+		else
+			echo "curl-compat\t兼容模式\t\t状态探测(按需检测)"
+		fi
+	elif [ -n "${status_tool_mode}" ]; then
 		STATUS_TOOL_PID="$(GET_STATUS_TOOL_PID "${status_tool_mode}")"
 		STATUS_TOOL_RSS=$(GET_VM_RSS_MULTI ${STATUS_TOOL_PID})
 		STATUS_TOOL_UPTIME=$(GET_PROC_UPTIME_MULTI ${STATUS_TOOL_PID})
