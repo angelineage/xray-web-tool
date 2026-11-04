@@ -5,6 +5,15 @@
             return line.trim() !== "XU6J03M6";
         }).join("\n");
     }
+    function decode(value) {
+        if (value && typeof value === "object") return value;
+        if (typeof value !== "string") throw new Error("Invalid log response");
+        if (value.indexOf("FSSLOG1:") === 0) {
+            var bytes = Uint8Array.from(atob(value.slice(8)), function (c) { return c.charCodeAt(0); });
+            return JSON.parse(new TextDecoder("utf-8", {fatal:true}).decode(bytes));
+        }
+        return JSON.parse(value);
+    }
     function create(options) {
         var generation = 0, timer = null, pending = null;
         function stop() {
@@ -47,7 +56,7 @@
         }
         return {start:start, stop:stop};
     }
-    var api = {create:create, clean:clean};
+    var api = {create:create, clean:clean, decode:decode};
     if (typeof module !== "undefined" && module.exports) module.exports = api;
     else root.FssLogViewer = api;
 }(typeof window === "undefined" ? this : window));

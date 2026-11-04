@@ -679,7 +679,7 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
-<script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.0"></script>
+<script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
 <script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=ac3100-0.1.0"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
@@ -14257,7 +14257,7 @@ function get_log() {
             return $.ajax({type:"POST", url:"/_api/", dataType:"json", cache:false, timeout:8000,
                 data:JSON.stringify({id:Math.floor(Math.random()*100000000),method:"ss_log.sh",params:["read",view],fields:{}}),
                 success:function(response) {
-                    try { success(typeof response.result === "string" ? JSON.parse(response.result) : response.result); }
+                    try { success(FssLogViewer.decode(response.result)); }
                     catch (error) { failure(); }
                 }, error:failure});
         },

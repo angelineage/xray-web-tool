@@ -27,7 +27,19 @@ case "$1" in
 read) log_snapshot "$2" ;;
 *)
 	[ "$2" = read ] || exit 2
+	case "${REQUEST_ID}" in ''|*[!0-9]*) exit 2 ;; esac
 	payload="$(log_snapshot "$3")" || exit 2
-	http_response "${payload}" >/dev/null 2>&1
+	# Older httpdb wraps the response verbatim in a JSON string. JSON text is
+	# unsafe there; transport one base64 token, then decode in the browser.
+	WIRE_DIR=$(mktemp -d /tmp/fss_log_response.XXXXXX) || exit 1
+	trap 'rm -f "${WIRE_DIR}/body"; rmdir "${WIRE_DIR}" 2>/dev/null' EXIT
+	trap 'exit 1' INT TERM
+	{
+		printf 'FSSLOG1:'
+		printf '%s' "${payload}" | base64 | tr -d '\r\n'
+	} > "${WIRE_DIR}/body"
+	# A file avoids Linux's per-argument size limit for large log snapshots.
+	curl -sS --noproxy '*' --connect-timeout 2 --max-time 5 -X POST \
+		--data-binary "@${WIRE_DIR}/body" "http://127.0.0.1/_resp/${REQUEST_ID}" >/dev/null 2>&1
 	;;
 esac

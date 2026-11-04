@@ -2,6 +2,13 @@ const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('ass
 const root=path.join(__dirname,'../src/shadowsocks');
 const viewer=require(root+'/res/ac3100-log-viewer.js');
 let tests=0;
+const logPayload={view:'plugin',exists:true,truncated:false,text:'中文日志\n"quoted" \\path\nXU6J03M6\n'};
+const wire='FSSLOG1:'+Buffer.from(JSON.stringify(logPayload),'utf8').toString('base64');
+// The legacy server inserts result bytes into quotes without JSON escaping.
+const legacyEnvelope=JSON.parse('{"result":"'+wire+'"}');
+assert.deepEqual(viewer.decode(legacyEnvelope.result),logPayload);tests++;
+assert.deepEqual(viewer.decode(JSON.stringify(logPayload)),logPayload);tests++;
+assert.throws(()=>viewer.decode('FSSLOG1:@@bad'));tests++;
 function fixture(){
     const requests=[],renders=[],errors=[],timers=new Map();let active=true,serial=0;
     const instance=viewer.create({isActive:()=>active,request:(view,success,failure)=>{const request={view,success,failure,aborted:false};requests.push(request);return {abort(){request.aborted=true;failure();}};},render:(...args)=>renders.push(args),error:e=>errors.push(e),setTimer:(fn,delay)=>{timers.set(++serial,{fn,delay});return serial;},clearTimer:id=>timers.delete(id)});
