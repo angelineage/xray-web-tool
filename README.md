@@ -1,4 +1,4 @@
-# fancyss-ac3100
+# Xray Web Tool
 
 只维护 **ASUS RT-AC3100 / arm_lite / Linux 2.6.36** 的个人维护分支。
 
@@ -48,7 +48,7 @@ git diff --stat
 
 ## 自己的在线规则源
 
-维护仓库为 [angelineage/fancyss-ac3100](https://github.com/angelineage/fancyss-ac3100)。从 0.1.1 开始，`maintenance.json` 已配置该公开仓库的 HTTPS 规则目录；路由器不需要 GitHub 账号或密钥即可下载。
+维护仓库为 [angelineage/xray-web-tool](https://github.com/angelineage/xray-web-tool)。从 0.1.1 开始，`maintenance.json` 已配置该公开仓库的 HTTPS 规则目录；路由器不需要 GitHub 账号或密钥即可下载。
 
 发布自己的规则文件后，将 `rules_base_url` 设置为同一 HTTPS 目录（通常是个人仓库的 raw URL），目录中放 `rules.json.js`、`gfwlist.gz`、`chnlist.gz`、`chnroute.txt`。可以直接发布 `src/shadowsocks/ss/rules/` 的对应文件。三项清单必须带 SHA-256。
 
@@ -73,7 +73,7 @@ python tools/release.py --tag
 
 `release.py` 要求工作区干净，执行测试、打包、创建本地注解标签并导出源码。推送个人 GitHub 仓库后，push/PR/标签会触发自动测试和打包；标签必须与版本一致。Actions 产物保存在对应运行的 Artifacts，当前工作流不自动创建公开 Release。
 
-规则工作流使用手动触发，只生成待审核补丁，不自动提交、不自动改路由器。远程仓库为 `https://github.com/angelineage/fancyss-ac3100.git`；工作流实际状态请查看仓库 Actions，本地通过不能代替云端验证。
+规则工作流使用手动触发，只生成待审核补丁，不自动提交、不自动改路由器。远程仓库为 `https://github.com/angelineage/xray-web-tool.git`；工作流实际状态请查看仓库 Actions，本地通过不能代替云端验证。
 
 ## 实机测试
 

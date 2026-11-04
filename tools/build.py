@@ -33,10 +33,20 @@ def build(output=None):
     files['shadowsocks/ss/compat_revision'] = ('ac3100-' + version + '\n').encode()
     files['shadowsocks/res/ac3100-version.js'] = ('window.FANCYSS_AC3100=' + json.dumps(config, ensure_ascii=False) + ';\n').encode()
     files['shadowsocks/LICENSE'] = (ROOT / 'LICENSE').read_bytes()
-    files['shadowsocks/SOURCE.txt'] = ('Upstream: https://github.com/hq450/fancyss\nUpstream commit: ' + config['upstream_commit'] + '\nMaintenance: fancyss-ac3100 ' + version + '\nSource code is distributed alongside this package.\n').encode()
+    files['shadowsocks/SOURCE.txt'] = ('Upstream: https://github.com/hq450/fancyss\nUpstream commit: ' + config['upstream_commit'] + '\nMaintenance: Xray Web Tool ' + version + '\nSource code is distributed alongside this package.\n').encode()
+    # Installed defaults are not always retained by the installer.
+    import io
+    default_buffer = io.BytesIO()
+    with tarfile.open(fileobj=default_buffer, mode='w') as default_tar:
+        for name, content in sorted(files.items()):
+            if name.startswith('shadowsocks/configs/') or name in ('shadowsocks/LICENSE', 'shadowsocks/SOURCE.txt'):
+                info = tarfile.TarInfo(name); info.size = len(content); info.mode = 0o644
+                default_tar.addfile(info, io.BytesIO(content))
+    files['shadowsocks/res/ac3100-package-defaults.tar'] = default_buffer.getvalue()
+    files['shadowsocks/res/ac3100-package-files.txt'] = ('\n'.join(sorted(n.removeprefix('shadowsocks/') for n in files)) + '\nres/ac3100-package-files.txt\n').encode()
     destination = pathlib.Path(output) if output else ROOT / 'dist'
     destination.mkdir(parents=True, exist_ok=True)
-    package = destination / ('fancyss_arm_lite_ac3100_' + version + '.tar.gz')
+    package = destination / ('xray_web_tool_arm_lite_ac3100_' + version + '.tar.gz')
     with package.open('wb') as raw, gzip.GzipFile(filename='', mode='wb', fileobj=raw, mtime=0) as gz:
         with tarfile.open(fileobj=gz, mode='w', format=tarfile.GNU_FORMAT) as archive:
             directories = sorted({str(pathlib.PurePosixPath(n).parent) for n in files} | {'shadowsocks'})

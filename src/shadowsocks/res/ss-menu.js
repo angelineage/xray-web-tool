@@ -188,15 +188,15 @@ function pop_111() {
 }
 function pop_help() {
     var version = window.FANCYSS_AC3100.version;
-    layer.open({type:1, title:'fancyss AC3100 维护版', area:'600px', shade:0.8,
+    layer.open({type:1, title:'Xray Web Tool', area:'600px', shade:0.8,
         shadeClose:true, btn:['关闭窗口'], btnAlign:'c',
         content:'<div style="padding:28px;line-height:26px;background:#393D49;color:#fff">' +
-            '<b>RT-AC3100 维护版 v' + version + '</b><br><br>' +
+            '<b>Xray Web Tool v' + version + '</b><br><br>' +
             '由 angelineage 维护，基于 fancyss，专用于 ASUS RT-AC3100 arm_lite。<br>' +
             '提供无广告界面、旧内核运行状态与国内外连接检测、Web 落地延迟、规则更新和实时日志。<br><br>' +
-            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/fancyss-ac3100">项目主页</a> · ' +
-            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/fancyss-ac3100/blob/main/CHANGELOG.md">更新日志</a> · ' +
-            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/fancyss-ac3100/issues">问题反馈</a></div>'
+            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/xray-web-tool">项目主页</a> · ' +
+            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/xray-web-tool/blob/main/CHANGELOG.md">更新日志</a> · ' +
+            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/xray-web-tool/issues">问题反馈</a></div>'
     });
 }
 function open_subscription_manager_from_node_tip(index) {
@@ -347,7 +347,7 @@ function getNowFormatDate(s) {
 	console.log(s, currentdate);
 }
 function menu_hook() {
-	tabtitle[tabtitle.length - 1] = new Array("", "fancyss科学上网", "__INHERIT__");
+	tabtitle[tabtitle.length - 1] = new Array("", "Xray Web Tool", "__INHERIT__");
 	tablink[tablink.length - 1] = new Array("", "Module_shadowsocks.asp", "NULL");
 }
 function versionCompare(v1, v2, options) {
@@ -402,6 +402,7 @@ function isJSON(str) {
 	}
 }
 function showSSLoadingBar(seconds) {
+    reset_operation_log();
 	if (window.scrollTo)
 		window.scrollTo(0, 0);
 
@@ -461,7 +462,7 @@ function LoadingSSProgress(seconds) {
 	document.getElementById("LoadingBar").style.visibility = "visible";
 	if (action == 0) {
 		document.getElementById("loading_block3").innerHTML = "科学上网功能关闭中 ..."
-		$("#loading_block2").html("<li><font color='#ffcc00'><a href='https://github.com/hq450/fancyss' target='_blank'></font>插件工作有问题？请到<em>GITHUB</em>提交issue...</font></li>");
+		$("#loading_block2").html("<li><font color='#ffcc00'><a href='https://github.com/angelineage/xray-web-tool/issues' target='_blank'></font>插件工作有问题？请到<em>GITHUB</em>提交issue...</font></li>");
 	} else if (action == 1) {
 		document.getElementById("loading_block3").innerHTML = "gfwlist模式启用中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>此期间请勿访问屏蔽网址，以免污染DNS进入缓存</font></li><li><font color='#ffcc00'>尝试不同的DNS解析方案，可以达到最佳的效果哦...</font></li><li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
@@ -540,6 +541,7 @@ function LoadingSSProgress(seconds) {
 	}
 }
 function hideSSLoadingBar() {
+    reset_operation_log();
 	x = -1;
 	E("LoadingBar").style.visibility = "hidden";
 	checkss = 0;

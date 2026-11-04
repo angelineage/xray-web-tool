@@ -41,4 +41,17 @@ vm.createContext(extraContext);vm.runInContext(validateSource,extraContext);
 for(const [value,ok] of [['',true],['{"xPaddingObfsMode":true,"downloadSettings":{"address":"example.com"}}',true],['[]',false],['null',false],['{broken}',false]]) {
  fields.xray_xhttp_extra.value=value;assert.equal(extraContext.validate_xhttp_extra('test_'),ok);tests++;
 }
+const countdownSource=html.slice(html.indexOf('function count_down_close()'),html.indexOf('function reload_Soft_Center()'));
+let now=10000,hidden=0,clockId=0;const clockTasks=new Map();const closeFields={};
+const closeCtx={Date:{now:()=>now},Math,E:id=>closeFields[id]||(closeFields[id]={style:{}}),realtimeCloseTimer:null,realtimeOperationId:'old',realtimeLogStartTimer:null,clear_text_file_poll_state:()=>{},hideSSLoadingBar:()=>hidden++,setTimeout:(fn,ms)=>{clockTasks.set(++clockId,{fn,at:now+ms});return clockId;},clearTimeout:id=>clockTasks.delete(id)};
+vm.createContext(closeCtx);vm.runInContext(countdownSource,closeCtx);
+closeCtx.count_down_close();now+=1000;closeCtx.reset_operation_log();
+for(const t of [...clockTasks.values()])t.fn();assert.equal(hidden,0);tests++;
+closeCtx.count_down_close();const end=now+5000;while(clockTasks.size){const [id,t]=[...clockTasks.entries()].sort((a,b)=>a[1].at-b[1].at)[0];clockTasks.delete(id);now=t.at;if(now<end)assert.equal(hidden,0);t.fn();}assert.equal(now,end);assert.equal(hidden,1);tests++;
+const realtimeSource=html.slice(html.indexOf('function get_realtime_log()'),html.indexOf('function count_down_close()'));
+let realtimeOptions,completed=0;const operationFields={};
+const operationCtx={realtimeOperationId:'new-operation',poll_text_file:o=>realtimeOptions=o,FssLogViewer:{decode:v=>v},E:id=>operationFields[id]||(operationFields[id]={style:{}}),count_down_close:()=>completed++,note_text_file_poll_progress:()=>{},console};
+vm.createContext(operationCtx);vm.runInContext('String.prototype.myReplace=function(a,b){return this.split(a).join(b);};'+realtimeSource,operationCtx);operationCtx.get_realtime_log();
+assert.equal(realtimeOptions.onSuccess({result:{operation:'old-operation',text:'old log\nXU6J03M6'}},{}).done,false);assert.equal(completed,0);tests++;
+assert.equal(realtimeOptions.onSuccess({result:{operation:'new-operation',text:'current log\nXU6J03M6'}},{}).done,true);assert.equal(completed,1);assert.match(operationFields.log_content3.value,/current log/);tests++;
 console.log(`${tests} UI checks passed: cancellation, stale results, retries, continued refresh, poller and syntax.`);

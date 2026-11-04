@@ -2,9 +2,9 @@
 
 ## 0.1.1 公开构建验收 — 2026-11-04
 
-- 公开仓库：[angelineage/fancyss-ac3100](https://github.com/angelineage/fancyss-ac3100)。
+- 公开仓库：[angelineage/xray-web-tool](https://github.com/angelineage/xray-web-tool)。
 - 主分支及 `v0.1.1` 标签的 GitHub Actions 均通过测试、构建及产物上传。
-- 标签构建：[运行 41752931336](https://github.com/angelineage/fancyss-ac3100/actions/runs/41752931336)。
+- 标签构建：[运行 41752931336](https://github.com/angelineage/xray-web-tool/actions/runs/41752931336)。
 - 下载主分支云端安装包后，与本地安装包逐字节校验一致，SHA-256 为 `074a73d1ef87ef97ce818dbeac3630a9381cd1e264a3ba1751376d0872dd38e2`。
 - 从个人公开规则源下载 gfwlist、chnlist、chnroute，三项 SHA-256 均与规则清单一致。
 - 此次验收不包含在路由器生产环境安装 0.1.1；此前的实机脚本隔离测试记录仍如下。

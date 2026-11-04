@@ -6,7 +6,7 @@ function replace(a,b){if(!s.includes(a))throw Error('Missing: '+a.slice(0,80));s
 replace('<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=compat1"></script>', '<script type="text/javascript" src="/res/ac3100-version.js"></script>\n<script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.0"></script>\n<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=ac3100-0.1.0"></script>');
 s=s.replace(/function version_show\(\) \{[\s\S]*?\nfunction message_show\(\)/, `function version_show() {
     var version = window.FANCYSS_AC3100.version;
-    $("#ss_version_show").text("RT-AC3100 维护版 " + version + "（上游 3.5.30）");
+    $("#ss_version_show").text("Xray Web Tool " + version + "（上游 3.5.30）");
     $("#updateBtn").text("维护版升级说明");
 }
 function message_show()`);

@@ -102,101 +102,27 @@ backup_conf_json(){
 }
 
 backup_tar(){
-	prepare_download_dir
-	echo_date "开始打包..."
-	cd /tmp
-	mkdir shadowsocks
-	mkdir shadowsocks/bin
-	mkdir shadowsocks/scripts
-	mkdir shadowsocks/webs
-	mkdir shadowsocks/res
-	echo_date "请等待一会儿..."
-	local pkg_name=$(get_pkg_name)
-	local pkg_arch=$(get_pkg_arch)
-	local pkg_type=$(get_pkg_type)
-	local pkg_exta=$(get_pkg_exta)
-	local pkg_vers=$(dbus get ss_basic_version_local)
-	local _pkg_name=${pkg_name}_${pkg_arch}_${pkg_type}${pkg_exta}
-	TARGET_FOLDER=/tmp/shadowsocks
-	cp /koolshare/scripts/ss_install.sh ${TARGET_FOLDER}/install.sh
-	cp /koolshare/scripts/uninstall_shadowsocks.sh ${TARGET_FOLDER}/uninstall.sh
-	cp /koolshare/scripts/ss_* ${TARGET_FOLDER}/scripts/
-	# binary
-	cp /koolshare/bin/isutf8 ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/obfs-local ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/rss-local ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/rss-redir ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/smartdns ${TARGET_FOLDER}/bin/
-	if [ -x "/koolshare/bin/dns_cache_mgr" ];then
-		cp /koolshare/bin/dns_cache_mgr ${TARGET_FOLDER}/bin/
-	fi
-	cp /koolshare/bin/chinadns-ng ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/sponge ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/jq ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/xray ${TARGET_FOLDER}/bin/
-	if [ -x "/koolshare/bin/xapi-tool" ];then
-		cp /koolshare/bin/xapi-tool ${TARGET_FOLDER}/bin/
-	fi
-	if [ -x "/koolshare/bin/sub-tool" ];then
-		cp /koolshare/bin/sub-tool ${TARGET_FOLDER}/bin/
-	fi
-	if [ -x "/koolshare/bin/node-tool" ];then
-		cp /koolshare/bin/node-tool ${TARGET_FOLDER}/bin/
-	fi
-	if [ -x "/koolshare/bin/status-tool" ];then
-		cp /koolshare/bin/status-tool ${TARGET_FOLDER}/bin/
-	fi
-	if [ -x "/koolshare/bin/statusctl" ];then
-		cp /koolshare/bin/statusctl ${TARGET_FOLDER}/bin/
-	fi
-	cp /koolshare/bin/curl-fancyss ${TARGET_FOLDER}/bin/
-	cp /koolshare/bin/dnsclient ${TARGET_FOLDER}/bin/
-	if [ -f "/koolshare/bin/sslocal" ];then
-		cp /koolshare/bin/sslocal ${TARGET_FOLDER}/bin/
-	fi
-	if [ -x "/koolshare/bin/websocketd" ];then
-		cp /koolshare/bin/websocketd ${TARGET_FOLDER}/bin/
-	fi
-	if [ "${pkg_type}" != "lite" ];then
-		cp /koolshare/bin/dohclient ${TARGET_FOLDER}/bin/
-		cp /koolshare/bin/dohclient-cache ${TARGET_FOLDER}/bin/
-		#cp /koolshare/bin/smartdns ${TARGET_FOLDER}/bin/
-		cp /koolshare/bin/v2ray ${TARGET_FOLDER}/bin/
-		[ -f "/koolshare/bin/haveged" ] && cp /koolshare/bin/haveged ${TARGET_FOLDER}/bin/
-		cp /koolshare/bin/ipt2socks ${TARGET_FOLDER}/bin/
-		cp /koolshare/bin/naive ${TARGET_FOLDER}/bin/
-		cp /koolshare/bin/tuic-client ${TARGET_FOLDER}/bin/
-		[ -f "/koolshare/bin/tuic-client" ] && cp /koolshare/bin/tuic-client ${TARGET_FOLDER}/bin/
-		[ -f "/koolshare/bin/anytls-zig" ] && cp /koolshare/bin/anytls-zig ${TARGET_FOLDER}/bin/
-		cp /koolshare/bin/hysteria2 ${TARGET_FOLDER}/bin/
-	fi
-	cp /koolshare/webs/Module_shadowsocks*.asp ${TARGET_FOLDER}/webs/
-	# others
-	cp /koolshare/res/arrow-down.gif ${TARGET_FOLDER}/res/
-	cp /koolshare/res/arrow-up.gif ${TARGET_FOLDER}/res/
-	cp /koolshare/res/accountadd.png ${TARGET_FOLDER}/res/
-	cp /koolshare/res/accountdelete.png ${TARGET_FOLDER}/res/
-	cp /koolshare/res/accountedit.png ${TARGET_FOLDER}/res/
-	cp /koolshare/res/icon-shadowsocks.png ${TARGET_FOLDER}/res/
-	cp /koolshare/res/ss-menu.js ${TARGET_FOLDER}/res/
-	cp /koolshare/res/tablednd.js ${TARGET_FOLDER}/res/
-	cp /koolshare/res/qrcode.js ${TARGET_FOLDER}/res/
-	cp /koolshare/res/fancyss.css ${TARGET_FOLDER}/res/
-	cp -r /koolshare/ss ${TARGET_FOLDER}/
-	rm -rf ${TARGET_FOLDER}/ss/*.json
-	rm -rf ${TARGET_FOLDER}/ss/*.conf
-	rm -rf ${TARGET_FOLDER}/ss/*.yaml
-	# arch
-	echo ${pkg_arch} > ${TARGET_FOLDER}/.valid
-	tar -czv -f /tmp/shadowsocks.tar.gz shadowsocks/
-	rm -rf ${TARGET_FOLDER}
-	mv /tmp/shadowsocks.tar.gz /tmp/files
-
-	if [ -n "${_pkg_name}" -a -n "${pkg_vers}" ];then
-		echo_date "打包文件名：${_pkg_name}_${pkg_vers}.tar.gz"
-		ln -sf /tmp/files/shadowsocks.tar.gz /tmp/files/${_pkg_name}_${pkg_vers}.tar.gz
-	fi
-	echo_date "打包完毕！"
+    prepare_download_dir
+    local stage="/tmp/fss_package.$$" rel from
+    mkdir -p "${stage}/shadowsocks" || return 1
+    tar -xf /koolshare/res/ac3100-package-defaults.tar -C "${stage}" || { rm -rf "${stage}"; return 1; }
+    rm -f /tmp/files/shadowsocks.tar.gz
+    echo_date "开始打包当前插件..."
+    while IFS= read -r rel; do
+        case "${rel}" in ''|/*|*..*) continue ;; esac
+        from="/koolshare/${rel}"
+        case "${rel}" in res/layer.js) from=/koolshare/res/layer/layer.js ;; install.sh) from=/koolshare/scripts/ss_install.sh ;; uninstall.sh) from=/koolshare/scripts/uninstall_shadowsocks.sh ;; esac
+        [ -f "${from}" ] || [ ! -f "${stage}/shadowsocks/${rel}" ] || continue
+        [ -f "${from}" ] || { echo_date "缺少打包文件：${rel}"; rm -rf "${stage}"; return 1; }
+        mkdir -p "${stage}/shadowsocks/$(dirname "${rel}")"
+        cp "${from}" "${stage}/shadowsocks/${rel}" || { rm -rf "${stage}"; return 1; }
+    done < /koolshare/res/ac3100-package-files.txt
+    tar -czf /tmp/files/shadowsocks.tar.gz.part -C "${stage}" shadowsocks
+    local rc=$?
+    rm -rf "${stage}"
+    [ "${rc}" = 0 ] || return 1
+    mv /tmp/files/shadowsocks.tar.gz.part /tmp/files/shadowsocks.tar.gz
+    echo_date "插件打包完成，准备下载。"
 }
 
 list_ss_clearable_keys(){
@@ -247,7 +173,7 @@ remove_now(){
 	[ -z "${ss_basic_notimecheck}" ] && dbus set ss_basic_notimecheck=1
 	[ -z "${ss_basic_nocdnscheck}" ] && dbus set ss_basic_nocdnscheck=1
 	[ -z "${ss_basic_nofdnscheck}" ] && dbus set ss_basic_nofdnscheck=1
-	[ -z "${ss_basic_qrcode}" ] && dbus set ss_basic_qrcode=1
+	dbus remove ss_basic_qrcode
 	dbus set ss_basic_node_cards=1
 
 	# others
@@ -492,13 +418,24 @@ if [ -z "$1" -a -z "$2" ];then
 	exit
 fi
 
+# Export jobs acknowledge only after the current log has been initialized.
+case "$act" in
+1|12|2)
+    mkdir /tmp/fss_export_operation.lock 2>/dev/null || { [ "$ws_flag" != 0 ] || http_response busy; exit 1; }
+    trap 'rmdir /tmp/fss_export_operation.lock 2>/dev/null' EXIT
+    case "$act" in 1) rm -f /tmp/files/ssconf_backup.sh ;; 12) rm -f /tmp/files/ssconf_backup_v2.json ;; 2) rm -f /tmp/files/shadowsocks.tar.gz ;; esac
+    : > "$LOG_FILE"
+    printf '%s' "$1" > /tmp/upload/ss_log.operation
+    printf '%s\n' '正在准备本次操作...' >> "$LOG_FILE"
+    [ "$ws_flag" != 0 ] || http_response "$1" >/dev/null 2>&1
+    ;;
+esac
 case $act in
 1)
 	if [ "${ws_flag}" == "0" ];then
 		backup_conf >> ${LOG_FILE} 2>&1
 		ret=$?
 		[ "${ret}" != "2" ] && echo XU6J03M6 >> ${LOG_FILE}
-		http_response "$1"
 	else
 		backup_conf 2>&1 | tee -a ${LOG_FILE}
 		echo XU6J03M6 | tee -a ${LOG_FILE}
@@ -509,7 +446,6 @@ case $act in
 		backup_conf_json >> ${LOG_FILE} 2>&1
 		ret=$?
 		[ "${ret}" != "2" ] && echo XU6J03M6 >> ${LOG_FILE}
-		http_response "$1"
 	else
 		backup_conf_json 2>&1 | tee -a ${LOG_FILE}
 		echo XU6J03M6 | tee -a ${LOG_FILE}
@@ -519,7 +455,6 @@ case $act in
 	true > ${LOG_FILE}
 	backup_tar >> ${LOG_FILE}
 	sleep 1
-	http_response "$1"
 	sleep 2	
 	echo XU6J03M6 >> ${LOG_FILE}
 	;;

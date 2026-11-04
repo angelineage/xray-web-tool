@@ -1,4 +1,4 @@
-name: Build AC3100 arm_lite
+name: Build Xray Web Tool
 on:
   push:
     branches: [main]
@@ -23,8 +23,8 @@ jobs:
       - run: node tests/test_probe.cjs
       - run: python tools/build.py
       - name: Include reviewed source
-        run: git archive --format=tar.gz --prefix=fancyss-ac3100/ -o dist/fancyss-ac3100-source.tar.gz HEAD
+        run: git archive --format=tar.gz --prefix=xray-web-tool/ -o dist/xray-web-tool-source.tar.gz HEAD
       - uses: actions/upload-artifact@v7.0.2
         with:
-          name: fancyss-ac3100
+          name: xray-web-tool
           path: dist/

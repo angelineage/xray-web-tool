@@ -1563,7 +1563,7 @@ install_now(){
 	local PKG_TYPE_OLD=""
 
 	# print message
-	local TITLE_NEW="fancyss AC3100 维护版"
+	local TITLE_NEW="Xray Web Tool"
 	local DESCR="angelineage 维护 · RT-AC3100 arm_lite · 连接检测、规则更新与实时日志"
 	echo_date "安装版本：${PKG_NAME}_${PKG_ARCH}_${PKG_TYPE}_${PLVER}"
 	
@@ -1638,7 +1638,7 @@ install_now(){
 	rm -rf /koolshare/res/arrow-down.gif
 	rm -rf /koolshare/res/arrow-up.gif
 	rm -rf /koolshare/res/ss-menu.js
-	rm -rf /koolshare/res/qrcode.js
+	rm -f /koolshare/res/qrcode.js /koolshare/res/qrcode.png
 	rm -rf /koolshare/res/tablednd.js
 	rm -rf /koolshare/res/shadowsocks.css
 	rm -rf /koolshare/res/fancyss.css
@@ -1889,7 +1889,7 @@ install_now(){
 	[ -z "${ss_basic_nocdnscheck}" ] && dbus set ss_basic_nocdnscheck=1
 	[ -z "${ss_basic_nofdnscheck}" ] && dbus set ss_basic_nofdnscheck=1
 	[ -z "${ss_basic_noruncheck}" ] && dbus set ss_basic_noruncheck=1
-	[ -z "${ss_basic_qrcode}" ] && dbus set ss_basic_qrcode=1
+	dbus remove ss_basic_qrcode
 	[ -z "${ss_basic_node_cards}" ] && dbus set ss_basic_node_cards=1
 
 	[ -z "${ss_basic_chng_xact}" ] && dbus set ss_basic_chng_xact=0

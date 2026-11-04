@@ -25,4 +25,4 @@ if __name__ == '__main__':
     run(sys.executable, 'tools/build.py')
     if args.tag:
         run('git', 'tag', '-a', 'v' + version, '-m', 'RT-AC3100 arm_lite maintenance ' + version)
-    run('git', 'archive', '--format=tar.gz', '--prefix=fancyss-ac3100/', '-o', str(ROOT / 'dist' / ('fancyss-ac3100-source-' + version + '.tar.gz')), 'HEAD')
+    run('git', 'archive', '--format=tar.gz', '--prefix=xray-web-tool/', '-o', str(ROOT / 'dist' / ('xray-web-tool-source-' + version + '.tar.gz')), 'HEAD')

@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title id="ss_title">【科学上网】</title>
+<title id="ss_title">Xray Web Tool</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
@@ -680,7 +680,7 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
 <script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
-<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=ac3100-maint2"></script>
+<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=0.1.3-log-sync"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/softcenter.js"></script>
@@ -929,13 +929,13 @@ function sync_pkg_runtime_meta(){
 	refresh_ws_enable();
 	if (changed && E("title_name")) {
 		var modelName = (typeof MODEL !== "undefined" && MODEL) ? MODEL : ('<% nvram_get("odmpid"); %>' || '<% nvram_get("productid"); %>');
-		$("#title_name").html(modelName + " 科学上网插件 - " + pkg_name);
+		$("#title_name").html("RT-AC3100 Xray Web Tool");
 	}
 }
 refresh_ws_enable();
 String.prototype.myReplace = function(f, e){
-	var reg = new RegExp(f, "g"); 
-	return this.replace(reg, e); 
+	var reg = new RegExp(f, "g");
+	return this.replace(reg, e);
 }
 function init() {
 	show_menu(menu_hook);
@@ -4117,16 +4117,6 @@ function get_node_type_title_tag(c) {
 			return "";
 	}
 }
-function build_qrcode_title_html(c) {
-	var typeTag = get_node_type_title_tag(c);
-	var name = escape_acl_html(c && c["name"] ? c["name"] : "");
-	if (!typeTag) {
-		return name;
-	}
-	var badge = '<span style="display:inline-block;vertical-align:middle;margin-right:8px;padding:2px 9px;border-radius:5px;background:linear-gradient(135deg,#1e88e5 0%,#26c6da 100%);color:#fff;font-size:12px;font-weight:700;line-height:18px;box-shadow:0 2px 8px rgba(30,136,229,.25);">' + escape_acl_html(typeTag) + '</span>';
-	var title = '<span style="display:inline-block;vertical-align:middle;color:#111;font-size:16px;font-weight:600;line-height:20px;max-width:260px;word-break:break-all;">' + name + '</span>';
-	return badge + title;
-}
 function get_next_node_id() {
 	if (get_node_storage_schema() == 2) {
 		var nextId = parseInt(db_fss["fss_node_next_id"] || "0", 10);
@@ -4493,7 +4483,8 @@ function build_route_file_name(baseName, extName) {
 }
 function get_route_file_meta(arg) {
 	var meta = {
-		1: { url: "_root/files/ssconf_backup.sh", fileName: build_route_file_name("Fancyss_conf_backup", "sh"), probeDelay: 1200, retryDelay: 500, maxRetry: 120, logDelay: 1200 },
+		2: { url: "_root/files/shadowsocks.tar.gz", fileName: "Xray-Web-Tool_" + window.FANCYSS_AC3100.version + ".tar.gz", probeDelay: 1500, retryDelay: 500, maxRetry: 180, logDelay: 500 },
+        1: { url: "_root/files/ssconf_backup.sh", fileName: build_route_file_name("Fancyss_conf_backup", "sh"), probeDelay: 1200, retryDelay: 500, maxRetry: 120, logDelay: 1200 },
 		12: { url: "_root/files/ssconf_backup_v2.json", fileName: build_route_file_name("Fancyss_conf_backup", "json"), probeDelay: 600, retryDelay: 300, maxRetry: 60, logDelay: 600 }
 	};
 	return meta[arg] || null;
@@ -4572,6 +4563,7 @@ function prepare_route_file(arg, cb) {
 	}
 	prepared_route_files[arg] = "pending";
 	var id = parseInt(Math.random() * 100000000);
+	realtimeOperationId = String(id);
 	var postData = {"id": id, "method": "ss_conf.sh", "params":[arg], "fields": {}};
 	$.ajax({
 		type: "POST",
@@ -4579,11 +4571,14 @@ function prepare_route_file(arg, cb) {
 		async: true,
 		cache:false,
 		data: JSON.stringify(postData),
-		dataType: "json"
-	});
-	setTimeout(function() {
-		poll_route_file_ready(arg, meta, 0);
-	}, typeof meta.probeDelay == "number" ? meta.probeDelay : 800);
+		dataType: "json",
+        success:function(response) {
+            if (String(response.result) !== String(id)) { flush_route_file_callbacks(arg,false); return; }
+            get_realtime_log();
+            poll_route_file_ready(arg,meta,0);
+        },
+        error:function() { flush_route_file_callbacks(arg,false); }
+    });
 }
 function download_prepared_route_file(arg, cb) {
 	var meta = get_route_file_meta(arg);
@@ -7051,7 +7046,6 @@ function save() {
 	  "ss_basic_noserver",
 	  "ss_basic_node_cards",
 	  "ss_basic_dragable",
-	  "ss_basic_qrcode",
 	  "ss_basic_enable",
 	  "ss_basic_gfwlist_update",
 	  "ss_basic_nonetcheck",
@@ -8488,7 +8482,7 @@ function verifyFields(r) {
 		$("#ss_sub_save_only").show();
 	}
 	var trid = $(r).attr("id")
-	if ( trid == "ss_basic_qrcode" || trid == "ss_basic_dragable" || trid == "ss_basic_tablet" || trid == "ss_basic_noserver" || trid == "ss_basic_node_cards") {
+	if ( trid == "ss_basic_dragable" || trid == "ss_basic_tablet" || trid == "ss_basic_noserver" || trid == "ss_basic_node_cards") {
 		var dbus_post = {};
 		dbus_post[trid] = E(trid).checked ? '1' : '0';
 		if(is_ws_available()){
@@ -8622,7 +8616,7 @@ function update_visibility() {
 	showhide("ss_basic_lt_web_time_row", !t1 && !t2);
 	if (E("ss_basic_dns_plan").value == "1"){
 		$(".chng").show();
-		$(".smrt").hide();							
+		$(".smrt").hide();
 	}else if(E("ss_basic_dns_plan").value == "2"){
 		$(".chng").hide();
 		$(".smrt").show();
@@ -9315,7 +9309,7 @@ function edit_conf_table(o) {
 		E("trojanTitle").style.display = "none";
 		E("hy2Title").style.display = "none";
 		$("#ssTitle").html("编辑ss节点");
-		tabclickhandler(0);		
+		tabclickhandler(0);
 	}
 	else if(c["type"] == "1"){
 		E("ssTitle").style.display = "none";
@@ -9325,7 +9319,7 @@ function edit_conf_table(o) {
 		E("trojanTitle").style.display = "none";
 		E("hy2Title").style.display = "none";
 		$("#ssrTitle").html("编辑SSR节点");
-		tabclickhandler(1);		
+		tabclickhandler(1);
 	}
 	else if(c["type"] == "3"){
 		E("ssTitle").style.display = "none";
@@ -10613,14 +10607,6 @@ function select_node_card(nodeId) {
 	select_default_node(2, {scroll: false});
 	return false;
 }
-function open_node_card_qrcode(nodeId) {
-	nodeId = resolve_node_id(nodeId, true);
-	if (!nodeId) {
-		return false;
-	}
-	makeQRcode({id: "server_" + nodeId});
-	return false;
-}
 function open_node_card_editor(nodeId) {
 	nodeId = resolve_node_id(nodeId, true);
 	if (!nodeId) {
@@ -10705,7 +10691,6 @@ function render_node_cards_html(nodeH, noserver, hasLatency) {
 								html += '<span class="latency_val"></span></div>';
 							}
 					html += '<div class="node-card-actions">';
-						html += '<a href="javascript:void(0);" class="node-card-tool node-card-qrcode" title="二维码" onclick="event.stopPropagation();open_node_card_qrcode(\'' + c["node"] + '\');return false;"><img src="/res/qrcode.png" alt="" /></a>';
 						html += '<a href="javascript:void(0);" class="node-card-tool node-card-edit" title="编辑节点" onclick="event.stopPropagation();open_node_card_editor(\'' + c["node"] + '\');return false;"><img src="/res/edit.png" alt="" /></a>';
 					html += '<div class="deactivate_icon" style="display:none;" id="apply_ss_node_' + c["node"] + '" onclick="event.stopPropagation();apply_this_ss_node(this);"></div>';
 					html += '</div>';
@@ -10810,8 +10795,8 @@ function refresh_html() {
 	html += '<table id="ss_node_list_table" style="margin:-1px 0px 0px 0px;" width="750px" border="0" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="list_table">'
 	for (var i = 0; i < ss_nodes.length; i++) {
 		var c = confs[ss_nodes[i]];
-		var qrcodeEnabled = E("ss_basic_qrcode").checked;
-		var serverDragable = !qrcodeEnabled && E("ss_basic_dragable").checked;
+
+		var serverDragable = E("ss_basic_dragable").checked;
 		html += '<tr id="node_' + c["node"] + '">';
 		html +='<td style="width:' + width[1] + ';" id="node_order_' + (i + 1) + '" class="dragHandle">' + (i + 1) + '</td>';
 		html += '<td style="width:' + width[2] + ';" class="dragHandle node_name" title="' + c["group"] + '&#10;' + c["name"] + '" id="ss_node_name_' + c["node"] + '">'
@@ -10821,9 +10806,7 @@ function refresh_html() {
 		if(noserver != "1"){
 			if(c["type"] == 8)
 			{
-				if(qrcodeEnabled){
-					html += '<td style="width:' + width[3] + ';cursor:pointer" class="node_server" id="server_' + c["node"] + '" title="' + c["hy2_server"] + '" onclick="makeQRcode(this)">';
-				}else if(serverDragable){
+                if(serverDragable){
 					html += '<td style="width:' + width[3] + ';cursor:move" class="dragHandle node_server" id="server_' + c["node"] + '" title="' + c["hy2_server"] + '&#10;拖拽此处可移动节点">';
 				}else{
 					html += '<td style="width:' + width[3] + ';" class="node_server" id="server_' + c["node"] + '">';
@@ -10834,9 +10817,7 @@ function refresh_html() {
 			}
 				else
 			{
-				if(qrcodeEnabled){
-					html += '<td style="width:' + width[3] + ';cursor:pointer" class="node_server" id="server_' + c["node"] + '" title="' + c["server"] + '" onclick="makeQRcode(this)">';
-				}else if(serverDragable){
+                if(serverDragable){
 					html += '<td style="width:' + width[3] + ';cursor:move" class="dragHandle node_server" id="server_' + c["node"] + '" title="' + c["server"] + '&#10;拖拽此处可移动节点">';
 				}else{
 					html += '<td style="width:' + width[3] + ';" class="node_server" id="server_' + c["node"] + '">';
@@ -11222,489 +11203,6 @@ function apply_this_ss_node(rowdata) {
 }
 function render_allow_insecure_notice(showExpr) {
 	return '&nbsp;&nbsp;<span data-show="' + showExpr + '" style="font-size:11px;color:#FFB300;line-height:1.8;">' + ALLOW_INSECURE_NOTICE + '</span>';
-}
-var current_qrcode_share_uri = "";
-function get_node_share_field(nodeId, conf, field) {
-	if (conf && typeof conf[field] != "undefined" && conf[field] !== "") {
-		return conf[field];
-	}
-	if (get_node_storage_schema() == 2) {
-		var raw = get_fss_raw_node(String(nodeId));
-		if (raw && typeof raw[field] != "undefined") {
-			if (is_node_raw_secret_field(field)) {
-				return decode_legacy_anytls_pass_if_needed(raw[field]);
-			}
-			return schema2_b64_value_for_ui(raw, field, raw[field]);
-		}
-	}
-	var legacyKey = "ssconf_basic_" + field + "_" + nodeId;
-	if (typeof db_ss[legacyKey] != "undefined") {
-		return db_ss[legacyKey];
-	}
-	return "";
-}
-function is_truthy_share_value(value) {
-	value = (value === null || typeof value == "undefined") ? "" : String(value).toLowerCase();
-	return value == "1" || value == "true" || value == "yes" || value == "on";
-}
-function append_share_query_param(params, key, value) {
-	if (value === null || typeof value == "undefined") {
-		return;
-	}
-	value = String(value);
-	if (value === "") {
-		return;
-	}
-	params.push(key + "=" + encodeURIComponent(value));
-}
-function format_share_remote_host(host) {
-	host = (host === null || typeof host == "undefined") ? "" : String(host);
-	if (host && host.indexOf(":") != -1 && host.indexOf("[") == -1 && host.indexOf("]") == -1) {
-		return "[" + host + "]";
-	}
-	return host;
-}
-function split_share_host_port(server) {
-	server = (server === null || typeof server == "undefined") ? "" : String(server);
-	var host = "";
-	var port = "";
-	if (/^\[[^\]]+\]:/.test(server)) {
-		var matchV6 = server.match(/^\[([^\]]+)\]:(.+)$/);
-		if (matchV6) {
-			host = matchV6[1];
-			port = matchV6[2];
-		}
-	} else if (/^\[[^\]]+\]$/.test(server)) {
-		host = server.slice(1, -1);
-	} else {
-		var parts = server.split(":");
-		if (parts.length == 2) {
-			host = parts[0];
-			port = parts[1];
-		} else {
-			host = server;
-		}
-	}
-	return {
-		host: host,
-		port: port
-	};
-}
-function build_xray_standard_link(c) {
-	if (!c || c["xray_use_json"] == "1") {
-		return 2;
-	}
-	var protocol = c["xray_prot"] || "vless";
-	if (protocol != "vless" && protocol != "vmess") {
-		return 2;
-	}
-	if (!c["server"] || !c["port"] || !c["xray_uuid"]) {
-		return 2;
-	}
-	if (protocol == "vmess" && c["xray_alterid"] && c["xray_alterid"] != "0") {
-		return 2;
-	}
-	var network = c["xray_network"] || "tcp";
-	if (network == "quic") {
-		return 2;
-	}
-	if (network == "tcp" && c["xray_headtype_tcp"] == "http") {
-		return 2;
-	}
-	var security = c["xray_network_security"] || "none";
-	if (security == "reality" && !c["xray_publickey"]) {
-		return 2;
-	}
-	var params = [];
-	var shareType = network == "h2" ? "http" : network;
-	append_share_query_param(params, "type", shareType);
-	append_share_query_param(params, "encryption", c["xray_encryption"] || (protocol == "vmess" ? "auto" : "none"));
-	append_share_query_param(params, "flow", c["xray_flow"]);
-	if (shareType == "grpc") {
-		append_share_query_param(params, "serviceName", c["xray_network_path"]);
-		append_share_query_param(params, "authority", c["xray_grpc_authority"]);
-		append_share_query_param(params, "mode", c["xray_grpc_mode"]);
-	} else {
-		if (shareType == "tcp" && c["xray_headtype_tcp"] && c["xray_headtype_tcp"] != "none") {
-			append_share_query_param(params, "headerType", c["xray_headtype_tcp"]);
-		}
-		if (shareType == "kcp") {
-			if (c["xray_headtype_kcp"] && c["xray_headtype_kcp"] != "none") {
-				append_share_query_param(params, "headerType", c["xray_headtype_kcp"]);
-			}
-			append_share_query_param(params, "seed", c["xray_kcp_seed"]);
-		}
-		if (shareType == "quic" && c["xray_headtype_quic"] && c["xray_headtype_quic"] != "none") {
-			append_share_query_param(params, "headerType", c["xray_headtype_quic"]);
-		}
-		if (shareType == "ws" || shareType == "http" || shareType == "quic" || shareType == "httpupgrade" || shareType == "xhttp") {
-			append_share_query_param(params, "host", c["xray_network_host"]);
-			append_share_query_param(params, "path", c["xray_network_path"]);
-		}
-		if (shareType == "xhttp") {
-			append_share_query_param(params, "mode", c["xray_xhttp_mode"]);
-            append_share_query_param(params, "extra", c["xray_xhttp_extra"]);
-		}
-	}
-	if (security != "none") {
-		append_share_query_param(params, "security", security);
-	}
-	if (security == "tls" || security == "reality") {
-		append_share_query_param(params, "sni", c["xray_network_security_sni"]);
-		append_share_query_param(params, "fp", c["xray_fingerprint"] || (security == "reality" ? "chrome" : ""));
-	}
-	if (security == "tls") {
-		if (is_truthy_share_value(c["xray_network_security_ai"])) {
-			append_share_query_param(params, "allowInsecure", "1");
-		} else {
-			append_share_query_param(params, "pcs", c["xray_pcs"]);
-			append_share_query_param(params, "vcn", c["xray_vcn"]);
-		}
-	}
-	if (security == "tls") {
-		var alpn = [];
-		if (is_truthy_share_value(c["xray_network_security_alpn_h2"])) {
-			alpn.push("h2");
-		}
-		if (is_truthy_share_value(c["xray_network_security_alpn_http"])) {
-			alpn.push("http/1.1");
-		}
-		if (alpn.length) {
-			append_share_query_param(params, "alpn", alpn.join(","));
-		}
-	}
-	if (security == "reality") {
-		append_share_query_param(params, "pbk", c["xray_publickey"]);
-		append_share_query_param(params, "sid", c["xray_shortid"]);
-		append_share_query_param(params, "spx", c["xray_spiderx"]);
-	}
-	var uri = protocol + "://" + encodeURIComponent(c["xray_uuid"]) + "@" + format_share_remote_host(c["server"]) + ":" + c["port"];
-	if (params.length) {
-		uri += "?" + params.join("&");
-	}
-	if (c["name"]) {
-		uri += "#" + encodeURIComponent(c["name"]);
-	}
-	return uri;
-}
-function build_trojan_standard_link(nodeId, c) {
-	if (!c || !c["server"] || !c["port"] || !c["trojan_uuid"]) {
-		return 3;
-	}
-	var params = [];
-	var plugin = get_node_share_field(nodeId, c, "trojan_plugin");
-	var obfs = get_node_share_field(nodeId, c, "trojan_obfs");
-	var obfsHost = get_node_share_field(nodeId, c, "trojan_obfshost");
-	var obfsUri = get_node_share_field(nodeId, c, "trojan_obfsuri");
-	append_share_query_param(params, "security", "tls");
-	append_share_query_param(params, "sni", c["trojan_sni"]);
-	if (is_truthy_share_value(c["trojan_ai"])) {
-		append_share_query_param(params, "allowInsecure", "1");
-	} else {
-		append_share_query_param(params, "pcs", c["trojan_pcs"]);
-		append_share_query_param(params, "vcn", c["trojan_vcn"]);
-	}
-	if (is_truthy_share_value(c["trojan_tfo"])) {
-		append_share_query_param(params, "tfo", "1");
-	}
-	if (obfs == "websocket") {
-		append_share_query_param(params, "type", "ws");
-		append_share_query_param(params, "host", obfsHost);
-		append_share_query_param(params, "path", obfsUri);
-	} else if (plugin) {
-		append_share_query_param(params, "plugin", plugin);
-		append_share_query_param(params, "obfs", obfs);
-		append_share_query_param(params, "obfs-host", obfsHost);
-		append_share_query_param(params, "obfs-uri", obfsUri);
-	}
-	var uri = "trojan://" + encodeURIComponent(c["trojan_uuid"]) + "@" + format_share_remote_host(c["server"]) + ":" + c["port"];
-	if (params.length) {
-		uri += "?" + params.join("&");
-	}
-	if (c["name"]) {
-		uri += "#" + encodeURIComponent(c["name"]);
-	}
-	return uri;
-}
-function build_naive_standard_link(c) {
-	if (!c || !c["naive_server"] || !c["naive_user"] || !c["naive_pass"]) {
-		return 7;
-	}
-	var prot = c["naive_prot"] || "https";
-	if (prot != "https" && prot != "quic") {
-		return 7;
-	}
-	var password = "";
-	try {
-		password = Base64.decode(c["naive_pass"]);
-	} catch (e) {
-		password = "";
-	}
-	if (!password) {
-		return 7;
-	}
-	var uri = "naive+" + prot + "://" + encodeURIComponent(c["naive_user"]) + ":" + encodeURIComponent(password) + "@" + format_share_remote_host(c["naive_server"]);
-	if (c["naive_port"]) {
-		uri += ":" + c["naive_port"];
-	}
-	if (c["name"]) {
-		uri += "#" + encodeURIComponent(c["name"]);
-	}
-	return uri;
-}
-function build_tuic_standard_link(c) {
-	if (!c || !c["tuic_json"]) {
-		return 6;
-	}
-	var json;
-	try {
-		json = JSON.parse(Base64.decode(c["tuic_json"]));
-	} catch (e) {
-		return 6;
-	}
-	if (!json || !json["relay"] || !json["relay"]["server"] || !json["relay"]["uuid"] || !json["relay"]["password"]) {
-		return 6;
-	}
-	var relay = json["relay"];
-	var serverInfo = split_share_host_port(relay["server"]);
-	if (!serverInfo["host"]) {
-		return 6;
-	}
-	var params = [];
-	if (relay["skip_cert_verify"] === true || is_truthy_share_value(relay["skip_cert_verify"])) {
-		append_share_query_param(params, "allow_insecure", "1");
-	}
-	if ($.isArray(relay["alpn"])) {
-		append_share_query_param(params, "alpn", relay["alpn"].join(","));
-	} else {
-		append_share_query_param(params, "alpn", relay["alpn"]);
-	}
-	append_share_query_param(params, "congestion_control", relay["congestion_control"]);
-	append_share_query_param(params, "udp_relay_mode", relay["udp_relay_mode"]);
-	append_share_query_param(params, "sni", relay["sni"] || relay["server_name"]);
-	if (relay["disable_sni"] === true || is_truthy_share_value(relay["disable_sni"])) {
-		append_share_query_param(params, "disable_sni", "1");
-	}
-	if (relay["zero_rtt_handshake"] === true || is_truthy_share_value(relay["zero_rtt_handshake"])) {
-		append_share_query_param(params, "zero_rtt_handshake", "1");
-	}
-	append_share_query_param(params, "ip", relay["ip"]);
-	var uri = "tuic://" + encodeURIComponent(relay["uuid"]) + ":" + encodeURIComponent(relay["password"]) + "@" + format_share_remote_host(serverInfo["host"]);
-	if (serverInfo["port"]) {
-		uri += ":" + serverInfo["port"];
-	}
-	if (params.length) {
-		uri += "?" + params.join("&");
-	}
-	if (c["name"]) {
-		uri += "#" + encodeURIComponent(c["name"]);
-	}
-	return uri;
-}
-function build_hy2_standard_link(c) {
-	if (!c || !c["hy2_server"] || !c["hy2_pass"]) {
-		return 5;
-	}
-	var params = [];
-	var host = format_share_remote_host(c["hy2_server"]);
-	var auth = encodeURIComponent(c["hy2_pass"]);
-	var port = c["hy2_port"] || "";
-	var obfs = c["hy2_obfs"];
-	if (obfs == "1") {
-		obfs = "salamander";
-	} else if (obfs == "0") {
-		obfs = "";
-	}
-	append_share_query_param(params, "obfs", obfs);
-	append_share_query_param(params, "obfs-password", c["hy2_obfs_pass"]);
-	append_share_query_param(params, "sni", c["hy2_sni"]);
-	if (is_truthy_share_value(c["hy2_ai"])) {
-		append_share_query_param(params, "insecure", "1");
-	}
-	append_share_query_param(params, "pinSHA256", c["hy2_pcs"]);
-	var uri = "hysteria2://" + auth + "@" + host;
-	if (port && port != "443") {
-		uri += ":" + port;
-	}
-	uri += "/";
-	if (params.length) {
-		uri += "?" + params.join("&");
-	}
-	if (c["name"]) {
-		uri += "#" + encodeURIComponent(c["name"]);
-	}
-	return uri;
-}
-function makeQRcode(node){
-	var id = $(node).attr("id");
-	var ids = id.split("_");
-	var p = "ssconf_basic";
-	id = ids[ids.length - 1];
-	var c = confs[id];
-	if(c["type"] == "0"){
-		var ssUserInfo = Base64.encode(c["method"] + ":" + Base64.decode(c["password"]) + "@" + format_share_remote_host(c["server"]) + ":" + c["port"]);
-		if(c["ss_obfs"] == "http" || c["ss_obfs"] == "tls"){
-			code = "ss://" + ssUserInfo + "/?plugin=obfs-local%3Bobfs%3D" + c["ss_obfs"] + "%3Bobfs-host%3D" + encodeURIComponent(c["ss_obfs_host"] || "");
-		}else{
-			code = "ss://" + ssUserInfo;
-		}
-		if (c["name"]) {
-			code += "#" + encodeURIComponent(c["name"]);
-		}
-	}
-	else if(c["type"] == "1"){
-    	var base64pass = c["password"].replace(/=+/,"");
-    	var base64obfsparm = Base64.encode(c["rss_obfs_param"]).replace(/=+/,"");
-    	var base64protoparam = Base64.encode(c["rss_protocol_param"]).replace(/=+/,"");
-    	var base64remark = Base64.encode(c["name"]).replace(/=+/,"");
-    	var base64group = Base64.encode(c["group"]).replace(/=+/,"");
-    	var config_ssr = c["server"] + ":" + c["port"] + ":" + c["rss_protocol"] + ":" + c["method"] + ":" + c["rss_obfs"] + ":" + base64pass + "/?obfsparam=" + base64obfsparm + "&protoparam=" + base64protoparam + "&remarks=" + base64remark + "&group=" + base64group;
-    	var code = "ssr:\/\/" + Base64.encode(config_ssr).replace(/=+/,"").replace(/\+/,"-").replace(/\//,"_");
-	}
-	else if(c["type"] == "3"){
-		if(c["v2ray_use_json"] == "1"){
-			var code = 1;
-		}else{
-			var code = {};
-			code.ps = c["name"];
-			code.v = "2";
-			code.add = c["server"];
-			code.port = c["port"];
-			code.id = c["v2ray_uuid"];
-			code.aid = c["v2ray_alterid"];
-			code.net = c["v2ray_network"];
-			code.host = c["v2ray_network_host"];
-			code.path = c["v2ray_network_path"];
-			code.tls = c["v2ray_network_security"];
-			if(c["v2ray_network"] == "tcp"){
-				code.type = c["v2ray_headtype_tcp"];
-			}else if(c["v2ray_network"] == "kcp"){
-				code.type = c["v2ray_headtype_kcp"];
-			}else if(c["v2ray_network"] == "quic"){
-				code.type = c["v2ray_headtype_quic"];
-			}
-			code = "vmess:\/\/" + Base64.encode(JSON.stringify(code));
-		}
-	}
-	else if(c["type"] == "4"){
-		var code = build_xray_standard_link(c);
-	}
-	else if(c["type"] == "5"){
-		var code = build_trojan_standard_link(id, c);
-	}
-	else if(c["type"] == "6"){
-		var code = build_naive_standard_link(c);
-	}
-	else if(c["type"] == "7"){
-		var code = build_tuic_standard_link(c);
-	}
-	else if(c["type"] == "8"){
-		var code = build_hy2_standard_link(c);
-	}
-	else{
-		var code = 4;
-	}
-	$("#qrtitle").html(build_qrcode_title_html(c));
-	$("#qrcode_show").css("top", "240px");
-	showQRcode(code);
-}
-function qrcode_uri_copyable(data) {
-	return typeof data == "string" && data.indexOf("://") > 0;
-}
-function update_qrcode_copy_button(data) {
-	var copyable = qrcode_uri_copyable(data);
-	current_qrcode_share_uri = copyable ? data : "";
-	if (E("qr_copy_btn")) {
-		E("qr_copy_btn").disabled = !copyable;
-		E("qr_copy_btn").style.opacity = copyable ? "1" : "0.55";
-		E("qr_copy_btn").style.cursor = copyable ? "pointer" : "not-allowed";
-	}
-}
-function fallback_copy_text(text) {
-	var textarea = document.createElement("textarea");
-	textarea.value = text;
-	textarea.setAttribute("readonly", "readonly");
-	textarea.style.position = "fixed";
-	textarea.style.top = "-1000px";
-	textarea.style.left = "-1000px";
-	textarea.style.opacity = "0";
-	document.body.appendChild(textarea);
-	textarea.focus();
-	textarea.select();
-	textarea.setSelectionRange(0, textarea.value.length);
-	var copied = false;
-	try {
-		copied = document.execCommand("copy");
-	} catch (e) {
-		copied = false;
-	}
-	document.body.removeChild(textarea);
-	return copied;
-}
-function copy_qrcode_share_uri() {
-	if (!current_qrcode_share_uri) {
-		layer.msg("当前节点暂不支持复制标准 URI");
-		return;
-	}
-	if (navigator.clipboard && window.isSecureContext) {
-		navigator.clipboard.writeText(current_qrcode_share_uri).then(function() {
-			layer.msg("节点 URI 已复制");
-		}).catch(function() {
-			if (fallback_copy_text(current_qrcode_share_uri)) {
-				layer.msg("节点 URI 已复制");
-			} else {
-				layer.msg("复制失败，请手动重试");
-			}
-		});
-		return;
-	}
-	if (fallback_copy_text(current_qrcode_share_uri)) {
-		layer.msg("节点 URI 已复制");
-	} else {
-		layer.msg("复制失败，请手动重试");
-	}
-}
-function showQRcode(data) {
-	update_qrcode_copy_button(data);
-	$("#qrcode").html("");
-	if(data == 1){
-		$("#qrcode").html('<span style="font-size:16px;color:#000;">暂不支持v2ray json配置的二维码生成！</span>')
-	}
-	else if(data == 2){
-		$("#qrcode").html('<span style="font-size:15px;color:#000;line-height:1.7;">暂不支持当前xray节点配置的标准二维码生成！<br />json配置、旧版VMess(alterId)、TCP+HTTP伪装、QUIC等场景请改用原始配置分享。</span>')
-	}
-	else if(data == 3){
-		$("#qrcode").html('<span style="font-size:15px;color:#000;line-height:1.7;">当前trojan节点缺少生成标准二维码所需的基础信息。<br />请检查服务器、端口、密码等配置是否完整。</span>')
-	}
-	else if(data == 4){
-		$("#qrcode").html('<span style="font-size:16px;color:#000;">错误！！节点类型位置！！<br />请检查你的节点！</span>')
-	}
-	else if(data == 5){
-		$("#qrcode").html('<span style="font-size:15px;color:#000;line-height:1.7;">当前hysteria2节点缺少生成标准二维码所需的基础信息。<br />请检查服务器、认证密码等配置是否完整。</span>')
-	}
-	else if(data == 6){
-		$("#qrcode").html('<span style="font-size:15px;color:#000;line-height:1.7;">当前tuic节点缺少生成标准二维码所需的基础信息。<br />请检查tuic json中的relay.server / relay.uuid / relay.password。</span>')
-	}
-	else if(data == 7){
-		$("#qrcode").html('<span style="font-size:15px;color:#000;line-height:1.7;">当前Naïve节点缺少生成标准二维码所需的基础信息。<br />请检查协议、服务器、账户和密码是否完整。</span>')
-	}
-	else
-	{
-		require(['/res/qrcode.js'], function() {
-			var qrcode = new QRCode(E("qrcode"), {
-				text: data,
-				width: 256,
-				height: 256,
-				colorDark : "#000000",
-				colorLight : "#ffffff",
-				correctLevel : QRCode.CorrectLevel.H
-			});
-		});
-	}
-	$("#qrcode_show").fadeIn(200);
-}
-function cleanCode(){
-	$("#qrcode_show").fadeOut(300);
 }
 function open_latency_sett() {
 	update_visibility();
@@ -12991,7 +12489,7 @@ function save_row(action) {
 function download_route_file(arg, cb) {
 	var routeMeta = get_route_file_meta(arg);
 	if (routeMeta) {
-		var showRouteLog = (arg == 1 || arg == 12);
+		var showRouteLog = (arg == 1 || arg == 12 || arg == 2);
 		if (prepared_route_files[arg] === "pending") {
 			if (showRouteLog) {
 				E("log_content3").value += (E("log_content3").value ? "\n" : "") + "已有导出任务正在进行，请等待当前导出完成。";
@@ -13004,14 +12502,14 @@ function download_route_file(arg, cb) {
 		}
 		if (showRouteLog) {
 			prepared_route_files[arg] = false;
-			db_ss["ss_basic_action"] = (arg == 1 ? "25" : (arg == 12 ? "26" : "27"));
+			db_ss["ss_basic_action"] = (arg == 2 ? "11" : (arg == 1 ? "25" : (arg == 12 ? "26" : "27")));
 			_responseLen = 0;
 			noChange = 0;
 			x = 5;
 			E("log_content3").value = "";
 			E("ok_button").style.display = "none";
 			showSSLoadingBar();
-			setTimeout(get_realtime_log, routeMeta.logDelay || 800);
+			// Polling begins after the backend acknowledges the new log.
 		}
 		prepare_route_file(arg, function(ok) {
 			if (ok) {
@@ -13192,17 +12690,24 @@ function validate_xhttp_extra(prefix) {
         return true;
     } catch (error) { alert("XHTTP 扩展参数必须是 JSON 对象，例如 {\"xPaddingObfsMode\":true}"); return false; }
 }
+function is_newer_release(latest, current) {
+    var a=latest.split(".").map(Number), b=current.split(".").map(Number);
+    for(var i=0;i<3;i++){if(a[i]!==b[i]) return a[i]>b[i];}
+    return false;
+}
 function version_show() {
     var version = window.FANCYSS_AC3100.version;
 
-    $("#updateBtn").text("维护版 v" + version);
+    $("#updateBtn").text("检查更新 v" + version);
+    $.ajax({type:"POST",url:"/_api/",dataType:"json",timeout:20000,data:JSON.stringify({id:Math.floor(Math.random()*100000000),method:"ss_update.sh",params:["check"],fields:{}}),success:function(r){if (/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(r.result) && is_newer_release(r.result.slice(1), version)) $("#updateBtn").text("更新至 " + r.result);}});
 }
 function message_show() {
 	// Local-only notices: no remote advertising feed.
 	if (node_nu == 0 && poped == 0) pop_node_add();
 }
 function update_ss() {
-    layer.msg("请使用维护项目生成的 arm_lite 安装包，通过软件中心离线升级。", {time:6000});
+    db_ss["ss_basic_action"] = "0";
+    push_data("ss_update.sh", "update", {});
 }
 function tabSelect(w) {
 	if (w !== 10 && mainLogViewer) mainLogViewer.stop();
@@ -13212,7 +12717,7 @@ function tabSelect(w) {
 	}
 	hide_log_switch_panel();
 	$('.show-btn' + w).addClass('active');
-	$('#tablet_' + w).show();	
+	$('#tablet_' + w).show();
 }
 var tab_actions = {
 	0: function() {
@@ -14286,7 +13791,9 @@ document.addEventListener("visibilitychange", function() {
 });
 window.addEventListener("beforeunload", function() { if (mainLogViewer) mainLogViewer.stop(); });
 
+var realtimeOperationId = "", realtimeCloseTimer = null;
 function get_realtime_log() {
+    var expectedOperation = realtimeOperationId;
 	poll_text_file({
 		key: "realtime_log",
 		reset: true,
@@ -14295,7 +13802,11 @@ function get_realtime_log() {
         dataType: 'json',
         data: function() { return JSON.stringify({id:Math.floor(Math.random()*100000000),method:"ss_log.sh",params:["read","plugin"],fields:{}}); },
 		onSuccess: function(response, state) {
-            try { response = FssLogViewer.decode(response.result).text; }
+            try {
+                var snapshot = FssLogViewer.decode(response.result);
+                if (expectedOperation && snapshot.operation !== expectedOperation) return {done:false,delay:300};
+                response = snapshot.text;
+            }
             catch (error) { return {done:false, delay:1000}; }
 			var retArea = E("log_content3");
 			if (response.search("XU6J03M6") != -1) {
@@ -14321,16 +13832,25 @@ function get_realtime_log() {
 	});
 }
 function count_down_close() {
-	if (x == "0") {
-		hideSSLoadingBar();
-	}
-	if (x < 0) {
-		E("ok_button1").value = "手动关闭"
-		return false;
-	}
-	E("ok_button1").value = "自动关闭（" + x + "）"
-		--x;
-	setTimeout(count_down_close, 1000);
+    if (realtimeCloseTimer !== null) clearTimeout(realtimeCloseTimer);
+    var deadline = Date.now() + 5000;
+    function tick() {
+        var remaining = Math.ceil((deadline - Date.now()) / 1000);
+        if (remaining <= 0) { realtimeCloseTimer=null; hideSSLoadingBar(); return; }
+        E("ok_button1").value = "自动关闭（" + remaining + "）";
+        realtimeCloseTimer = setTimeout(tick, Math.min(1000, deadline-Date.now()));
+    }
+    tick();
+}
+function reset_operation_log() {
+    if (realtimeCloseTimer !== null) clearTimeout(realtimeCloseTimer);
+    realtimeCloseTimer=null;
+    realtimeOperationId="";
+    if (realtimeLogStartTimer) clearTimeout(realtimeLogStartTimer);
+    realtimeLogStartTimer=null;
+    clear_text_file_poll_state("realtime_log");
+    E("log_content3").value="正在准备本次操作…";
+    E("ok_button").style.display="none";
 }
 function reload_Soft_Center() {
 	location.href = "/Module_Softcenter.asp";
@@ -15662,10 +15182,10 @@ function toggleKeyMask(o, show){
 											<div id="title_name" class="formfonttitle"></div>
 											<script type="text/javascript">
 												var MODEL = '<% nvram_get("odmpid"); %>' || '<% nvram_get("productid"); %>';
-												var FANCYSS_TITLE=" - " + pkg_name;
-												$("#title_name").html(MODEL + " 科学上网插件" + FANCYSS_TITLE);
-												$("#ss_title").html(MODEL + " - fancyss");
-											</script>										
+
+												$("#title_name").html("RT-AC3100 Xray Web Tool");
+												$("#ss_title").html("Xray Web Tool");
+											</script>
 											<div style="float:right; width:15px; height:25px;margin-top:-20px">
 												<img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img>
 											</div>
@@ -15686,7 +15206,7 @@ function toggleKeyMask(o, show){
 												</ul>
 											</div>
 											<div id="detail_status" class="content_status" style="box-shadow: 3px 3px 10px #000;margin-top: -20px;">
-												<div class="user_title">【科学上网】状态检测</div>
+												<div class="user_title">Xray Web Tool状态检测</div>
 												<div style="margin-left:15px"><i>&nbsp;&nbsp;详细状态检测可以让你了解插件相关二进制和iptables的运行状况，用以排除一些使用中的问题。</i></div>
 												<div style="margin: 10px 10px 10px 10px;width:98%;text-align:center;overflow:hidden">
 													<textarea cols="63" rows="36" wrap="off" id="proc_status" style="line-height:1.45;width:98%;padding-left:13px;padding-right:33px;border:0px solid #222;font-family:'Lucida Console'; font-size:11px;background: transparent;color:#FFFFFF;outline: none;overflow-x:hidden;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
@@ -15734,15 +15254,6 @@ function toggleKeyMask(o, show){
 													<input class="button_gen" type="button" onclick="close_dns_status();" value="返回主界面">
 												</div>
 											</div>
-											<div id="qrcode_show" class="content_status" style="box-shadow: 3px 3px 10px #000;margin-top: 90px;margin-left:197px;width:356px;height:356px;background: #fff;">
-												<div style="text-align: center;margin-top:10px"><span id="qrtitle" style="font-size:16px;color:#000;"></span></div>
-												<div id="qrcode" style="margin: 10px 50px 10px 50px;width:256px;height:256px;text-align:center;overflow:hidden">
-												</div>
-												<div style="margin-top:15px;padding-bottom:10px;width:100%;text-align:center;">
-													<input id="qr_copy_btn" class="button_gen" type="button" onclick="copy_qrcode_share_uri();" value="复制节点">
-													<input class="button_gen" type="button" onclick="cleanCode();" value="返回">
-												</div>
-											</div>
 											<div id="ss_switch_show" style="margin:-1px 0px 0px 0px;">
 												<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="ss_switch_table">
 													<thead>
@@ -15767,9 +15278,9 @@ function toggleKeyMask(o, show){
 															<div id="update_button" style="display:table-cell;float: left;position: absolute;margin-left:70px;padding: 5.5px 0px;">
 																<a id="updateBtn" type="button" class="ss_btn" style="cursor:pointer" onclick="update_ss()">检查并更新</a>
 															</div>
-															
+
 															<div style="display:table-cell;float: left;margin-left:270px;position: absolute;padding: 5.5px 0px;">
-																<a type="button" class="ss_btn" target="_blank" href="https://github.com/angelineage/fancyss-ac3100/blob/main/CHANGELOG.md">更新日志</a>
+																<a type="button" class="ss_btn" target="_blank" href="https://github.com/angelineage/xray-web-tool/blob/main/CHANGELOG.md">更新日志</a>
 															</div>
 															<div style="display:table-cell;float: left;margin-left:350px;position: absolute;padding: 5.5px 0px;">
 																<a type="button" class="ss_btn" href="javascript:void(0);" onclick="pop_help()">插件帮助</a>
@@ -16219,7 +15730,7 @@ function toggleKeyMask(o, show){
 																{ id: 'ss_basic_chng_trust_dot_3_opt', type:'select', func:'u', options:[], style:'width:auto;'},
 																{ id: 'ss_basic_chng_trust_dot_3_usr', type: 'text', style:'width:180px;', value:'one.one.one.one@1.1.1.1', ph:'one.one.one.one@1.1.1.1' },
 																{ suffix: '&nbsp;&nbsp;'},
-															]},	
+															]},
 															{ title: '&nbsp;&nbsp;*过滤AAAA记录（--no-ipv6）', class:'new_dns chng', hint:'145', multi: [
 																{ id: 'ss_basic_chng_ipv6_drop_direc', type:'checkbox', func:'u', value:false},
 																{ suffix: '<a>过滤直连</a>' },
@@ -16257,9 +15768,9 @@ function toggleKeyMask(o, show){
 																{ suffix: '&nbsp;&nbsp;' },
 																{ suffix:'<a type="button" class="ss_btn" style="cursor:pointer" onclick="dns_test(6)">dig</a>&nbsp;&nbsp;'},
 															]},
-															{ title: '重启dnsmasq', rid: 'ss_dnsmasq_restart', multi: [	
+															{ title: '重启dnsmasq', rid: 'ss_dnsmasq_restart', multi: [
 																{ suffix:'<a type="button" class="ss_btn" style="cursor:pointer" onclick="restart_dnsmaq()">重启dnsmasq</a>'},
-															]},	
+															]},
 															{ title: '自定义dnsmasq', rid: 'ss_dnsmasq_cus', id:'ss_dnsmasq', type:'textarea', hint:'34', rows:'12', ph:ph3},
 															]);
 														var isp_dns_raw='<% nvram_get("wan0_dns"); %>';
@@ -16637,17 +16148,17 @@ function toggleKeyMask(o, show){
 														var weburl = ["developer.google.cn/generate_204", "connectivitycheck.gstatic.com/generate_204", "www.gstatic.com/generate_204"];
 														$('#table_addons').forms([
 															{ td: '<tr><td class="smth" style="font-weight: bold;" colspan="2">备份/恢复</td></tr>'},
-															{ title: '导出fancyss配置', hint:'24', multi: [
-																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;width:auto;min-width:148px;padding:5px 12px;" onclick="download_route_file(12);" value="导出配置">'},
+															{ title: '导出配置', hint:'24', multi: [
+																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;" onclick="download_route_file(12);" value="导出配置">'},
 																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;" onclick="remove_SS_node();" value="清空配置">'},
 																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;" onclick="download_route_file(2);" value="打包插件">'},
 															]},
-															{ title: '恢复fancyss配置', hint:'24', multi: [
+															{ title: '恢复配置', hint:'24', multi: [
 																{ suffix:'<input style="color:#FFCC00;*color:#000;width: 200px;" id="ss_file" type="file" name="file"/>'},
 																{ suffix:'<img id="loadingicon" style="margin-left:5px;margin-right:5px;display:none;" src="/images/InternetScan.gif"/>'},
 																{ suffix:'<span id="ss_file_info" style="display:none;">完成</span>'},
 																{ suffix:'<input type="button" class="ss_btn" style="cursor:pointer;" onclick="upload_ss_backup();" value="恢复配置"/>'},
-															]},											
+															]},
 															{ td: '<tr><td class="smth" style="font-weight: bold;" colspan="2">定时任务</td></tr>'},
 															{ title: '插件定时重启设定', multi: [
 																{ id:'ss_reboot_check', type:'select', style:'width:auto', func:'v', options:option_rebc, value:'0'},
@@ -16666,7 +16177,6 @@ function toggleKeyMask(o, show){
 															]},
 															{ td: '<tr><td class="smth" style="font-weight: bold;" colspan="2">节点列表</td></tr>'},
 															{ title: '节点列表最大显示行数', id:'ss_basic_row', type:'select', func:'onchange="save_row();"', style:'width:auto', options:[]},
-															{ title: '开启生成二维码功能', id:'ss_basic_qrcode', func:'v', type:'checkbox', value:true},
 															{ title: '开启节点排序功能', id:'ss_basic_dragable', func:'v', type:'checkbox', value:true},
 															{ title: '节点管理使用卡片视图', id:'ss_basic_node_cards', func:'v', type:'checkbox', value:true},
 															{ title: '节点管理页面设为默认标签页', id:'ss_basic_tablet', func:'v', type:'checkbox', value:false},

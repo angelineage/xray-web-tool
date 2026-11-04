@@ -19,8 +19,8 @@ log_snapshot() {
 	fi
 	{
 		[ "${exists}" = false ] || tail -n 2000 "${file}" 2>/dev/null | tail -c 131072
-	} | "${JQ}" -Rs --arg view "${view}" --argjson exists "${exists}" --argjson truncated "${truncated}" \
-		'{view:$view,exists:$exists,truncated:$truncated,text:.}'
+	} | "${JQ}" -Rs --arg operation "$(cat /tmp/upload/ss_log.operation 2>/dev/null)" --arg view "${view}" --argjson exists "${exists}" --argjson truncated "${truncated}" \
+		'{operation:$operation,view:$view,exists:$exists,truncated:$truncated,text:.}'
 }
 
 case "$1" in

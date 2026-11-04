@@ -136,7 +136,7 @@ def refresh(apply=False, offline=False):
     for name, url in SOURCES.items():
         file = cache / (name + '.txt')
         if not offline:
-            request = urllib.request.Request(url, headers={'User-Agent': 'fancyss-ac3100-rule-builder/0.1'})
+            request = urllib.request.Request(url, headers={'User-Agent': 'xray-web-tool-rule-builder/0.1'})
             with urllib.request.urlopen(request, timeout=45) as response:
                 data = response.read(16 * 1024 * 1024 + 1)
             if not 100 <= len(data) <= 16 * 1024 * 1024:
