@@ -4727,9 +4727,14 @@ json_init(){
 }
 
 json_add_string(){
-	if [ -n "$2" ];then
-		NODE_DATA="${NODE_DATA}\"$1\":\"$2\","
-	fi
+    [ -n "$2" ] || return 0
+    local encoded
+    case "$2" in
+        *\"*|*\\*|*'
+'*) encoded=$(printf '%s' "$2" | /koolshare/bin/jq -Rs .) || return 1 ;;
+        *) encoded="\"$2\"" ;;
+    esac
+    NODE_DATA="${NODE_DATA}\"$1\":${encoded},"
 }
 
 json_write_object(){
@@ -4740,7 +4745,7 @@ json_write_object(){
 	local source_scope="local"
 	local source_url_hash=""
 	local profile_id=""
-	object_json=$(echo $NODE_DATA | sed '$ s/,$/}/g')
+	object_json=$(printf '%s' "${NODE_DATA}" | sed '$ s/,$/}/g')
 	case "${output_file}" in
 	*/online_*|*/local_*)
 		source_type="subscribe"
@@ -6318,6 +6323,16 @@ add_vless_node(){
 	x_vcn=$(sub_uri_query_value "${decode_link}" "vcn" | urldecode)
 	x_sid=$(echo "${_STRING_2}"|sed 's/&/\n/g;s/#/\n/g' | grep "sid=" | awk -F"=" '{print $2}')
 	x_spx=$(echo "${_STRING_2}"|sed 's/&/\n/g;s/#/\n/g' | grep "spx=" | awk -F"=" '{print $2}' | urldecode)
+    # Parse query values before decoding the URI as a whole: encoded '&', '='
+    # and '#' belong to values, not to query separators.
+    x_host=$(sub_uri_query_value "$1" host | urldecode)
+    x_path=$(sub_uri_query_value "$1" path | urldecode)
+    x_mode=$(sub_uri_query_value "$1" mode | urldecode)
+    x_type=$(sub_uri_query_value "$1" type | urldecode)
+    [ -n "${x_type}" ] || x_type=tcp
+    x_sni=$(sub_uri_query_value "$1" sni | urldecode)
+    x_remarks=$(printf '%s' "$1" | sed -n 's/^[^#]*#//p' | urldecode)
+    x_xhttp_extra=""
 	case ${x_type} in
 	tcp)
 		# tcp协议设置【tcp伪装类型 (type)】
@@ -6392,7 +6407,10 @@ add_vless_node(){
 		x_headtype_kcp=""
 		x_headtype_quic=""
 		x_grpc_authority=""
-		x_xhttp_mode=${x_mode}
+		x_xhttp_mode=${x_mode:-auto}
+        x_xhttp_extra=$(sub_uri_query_value "$1" "extra" | urldecode)
+        [ -n "${x_xhttp_extra}" ] || x_xhttp_extra='{}'
+        x_xhttp_extra=$(printf '%s' "${x_xhttp_extra}" | /koolshare/bin/jq -ce 'if type == "object" then . else error("invalid XHTTP extra") end') || return 1
 		if [ -z "${x_host}" -a -z "${x_sni}" ];then
 			x_host="${x_server}"
 		fi
@@ -6512,6 +6530,7 @@ add_vless_node(){
 	json_add_string xray_grpc_mode "${x_grpc_mode}"
 	json_add_string xray_grpc_authority "${x_grpc_authority}"
 	json_add_string xray_xhttp_mode "${x_xhttp_mode}"
+	json_add_string xray_xhttp_extra "${x_xhttp_extra}"
 	json_add_string xray_headtype_kcp "${x_headtype_kcp}"
 	json_add_string xray_headtype_quic "${x_headtype_quic}"
 	json_add_string xray_headtype_tcp "${x_headtype_tcp}"

@@ -33,4 +33,12 @@ assert.match(html,/tablet_10.*style\.display/);tests++;
 const functions=html.slice(html.indexOf('function get_text_file_poll_state('),html.indexOf('function push_data(script,'));
 const calls=[];const ctx={textFilePollStates:{},setTimeout:()=>1,clearTimeout:()=>{},$: {extend:Object.assign,ajax:opts=>{calls.push(opts);return {abort:()=>opts.error({})};}}};vm.createContext(ctx);vm.runInContext(functions,ctx);
 let oldCount=0,newCount=0;ctx.poll_text_file({key:'test',reset:true,url:'/old',onSuccess:()=>{oldCount++;}});ctx.poll_text_file({key:'test',reset:true,url:'/new',onSuccess:()=>{newCount++;}});calls[0].success('old');calls[1].success('new');assert.equal(oldCount,0);assert.equal(newCount,1);tests++;
+// Exercise form validation with nested settings and malformed user input.
+const validateSource=html.slice(html.indexOf('function validate_xhttp_extra('),html.indexOf('function version_show()'));
+const fields={xray_use_json:{checked:false},xray_network:{value:'xhttp'},xray_xhttp_extra:{value:''}};
+const extraContext={E:id=>fields[id.replace('test_','')],alert:()=>{}};
+vm.createContext(extraContext);vm.runInContext(validateSource,extraContext);
+for(const [value,ok] of [['',true],['{"xPaddingObfsMode":true,"downloadSettings":{"address":"example.com"}}',true],['[]',false],['null',false],['{broken}',false]]) {
+ fields.xray_xhttp_extra.value=value;assert.equal(extraContext.validate_xhttp_extra('test_'),ok);tests++;
+}
 console.log(`${tests} UI checks passed: cancellation, stale results, retries, continued refresh, poller and syntax.`);

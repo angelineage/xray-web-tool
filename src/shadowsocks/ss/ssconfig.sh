@@ -4397,6 +4397,10 @@ creat_vless_json() {
 				,\"host\": $(get_value_empty $ss_basic_xray_network_host_raw)
 				,\"mode\": \"${ss_basic_xray_xhttp_mode}\"
 				}"
+            local xextra="${ss_basic_xray_xhttp_extra}"
+            [ -n "${xextra}" ] || xextra='{}'
+            xht=$(printf '%s' "${xextra}" | /koolshare/bin/jq -ce --argjson base "${xht}" 'if type == "object" then . + $base else error("XHTTP extra must be an object") end') || return 1
+
 			;;
 		httpupgrade)
 			local htup="{

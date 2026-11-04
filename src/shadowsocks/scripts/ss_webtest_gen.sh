@@ -885,6 +885,10 @@ wt_gen_vless_outbound() {
 				,\"host\": $(wt_get_value_empty ${xray_network_host_raw})
 				,\"mode\": \"${xray_xhttp_mode}\"
 				}"
+            local xextra="$(wt_node_get_plain xray_xhttp_extra ${nu})"
+            [ -n "${xextra}" ] || xextra='{}'
+            xht=$(printf '%s' "${xextra}" | /koolshare/bin/jq -ce --argjson base "${xht}" 'if type == "object" then . + $base else error("XHTTP extra must be an object") end') || return 1
+
 			;;
 		httpupgrade)
 			local htup="{
