@@ -46,4 +46,20 @@ jobs:
           VERSION="${RELEASE_TAG#v}"
           git archive --format=tar.gz --prefix=xray-web-tool/ -o "dist/xray-web-tool-source-${VERSION}.tar.gz" HEAD
           gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "Xray Web Tool ${RELEASE_TAG}" --notes-file CHANGELOG.md
-          gh release upload "$RELEASE_TAG" "dist/xray_web_tool_arm_lite_ac3100_${VERSION}.tar.gz" "dist/xray-web-tool-source-${VERSION}.tar.gz" dist/SHA256SUMS.txt dist/build-manifest.json --clobber
+          for ASSET in "dist/xray_web_tool_arm_lite_ac3100_${VERSION}.tar.gz" "dist/xray-web-tool-source-${VERSION}.tar.gz" dist/SHA256SUMS.txt dist/build-manifest.json; do
+            NAME="${ASSET##*/}"
+            EXPECTED="sha256:$(sha256sum "$ASSET" | cut -d' ' -f1)"
+            VERIFIED=0
+            for ATTEMPT in 1 2 3; do
+              if ! gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > "$RUNNER_TEMP/release-assets.json"; then sleep 2; continue; fi
+              ACTUAL=$(jq -r --arg name "$NAME" '.assets[] | select(.name==$name) | .digest // empty' "$RUNNER_TEMP/release-assets.json")
+              if [ "$ACTUAL" = "$EXPECTED" ]; then VERIFIED=1; echo "$NAME already verified"; break; fi
+              if jq -e --arg name "$NAME" 'any(.assets[]; .name==$name)' "$RUNNER_TEMP/release-assets.json" >/dev/null; then echo "Existing asset differs: $NAME"; exit 1; fi
+              gh release upload "$RELEASE_TAG" "$ASSET" || true
+            done
+            if [ "$VERIFIED" != 1 ]; then
+              gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > "$RUNNER_TEMP/release-assets.json"
+              ACTUAL=$(jq -r --arg name "$NAME" '.assets[] | select(.name==$name) | .digest // empty' "$RUNNER_TEMP/release-assets.json")
+              test "$ACTUAL" = "$EXPECTED"
+            fi
+          done
