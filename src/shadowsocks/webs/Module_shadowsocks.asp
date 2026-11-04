@@ -13180,7 +13180,7 @@ function updatelist(arg) {
 function version_show() {
     var version = window.FANCYSS_AC3100.version;
     $("#ss_version_show").text("RT-AC3100 维护版 " + version + "（上游 3.5.30）");
-    $("#updateBtn").text("维护版升级说明");
+    $("#updateBtn").text("维护版 v" + version);
 }
 function message_show() {
 	// Local-only notices: no remote advertising feed.
@@ -15760,7 +15760,7 @@ function toggleKeyMask(o, show){
 																<a><i>当前版本：</i></a>
 															</div>
 															<div style="display:table-cell;float: left;margin-left:270px;position: absolute;padding: 5.5px 0px;">
-																<a type="button" class="ss_btn" target="_blank" href="https://github.com/hq450/fancyss/blob/3.0/Changelog.txt">更新日志</a>
+																<a type="button" class="ss_btn" target="_blank" href="https://github.com/angelineage/fancyss-ac3100/blob/main/CHANGELOG.md">更新日志</a>
 															</div>
 															<div style="display:table-cell;float: left;margin-left:350px;position: absolute;padding: 5.5px 0px;">
 																<a type="button" class="ss_btn" href="javascript:void(0);" onclick="pop_help()">插件帮助</a>

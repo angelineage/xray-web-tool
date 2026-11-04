@@ -2,6 +2,8 @@
 # Single-dispatch, transactional updater for this maintenance project's feed.
 REQUEST_ID="$1"
 source /koolshare/scripts/base.sh
+# Legacy firmware defines echo_date as an alias; remove it before our function.
+unalias echo_date 2>/dev/null || true
 source /koolshare/scripts/ss_probe_lib.sh
 eval $(dbus export ss_basic_)
 RULE_DIR=/koolshare/ss/rules
