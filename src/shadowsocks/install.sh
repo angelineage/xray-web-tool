@@ -1563,8 +1563,8 @@ install_now(){
 	local PKG_TYPE_OLD=""
 
 	# print message
-	local TITLE_NEW="科学上网 ${PKG_TYPE}"
-	local DESCR="科学上网 ${PKG_TYPE} for AsusWRT/Merlin platform"
+	local TITLE_NEW="fancyss AC3100 维护版"
+	local DESCR="angelineage 维护 · RT-AC3100 arm_lite · 连接检测、规则更新与实时日志"
 	echo_date "安装版本：${PKG_NAME}_${PKG_ARCH}_${PKG_TYPE}_${PLVER}"
 	
 	# stop first
@@ -2038,7 +2038,7 @@ install_now(){
 	echo_date "设置插件安装参数..."
 	dbus set ss_basic_version_local="${PLVER}"
 	dbus set fss_ac3100_version="$(/koolshare/bin/jq -r '.version' /koolshare/ss/maintenance.json)"
-	dbus set softcenter_module_${module}_version="${PLVER}"
+	dbus set softcenter_module_${module}_version="$(/koolshare/bin/jq -r '.version' /koolshare/ss/maintenance.json)"
 	dbus set softcenter_module_${module}_install="4"
 	dbus set softcenter_module_${module}_name="${module}"
 	dbus set softcenter_module_${module}_title="${TITLE_NEW}"

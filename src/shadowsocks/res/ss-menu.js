@@ -187,32 +187,17 @@ function pop_111() {
 	});
 }
 function pop_help() {
-	layer.open({
-		type: 1,
-		title: false,
-		closeBtn: false,
-		area: '600px;',
-		shade: 0.8,
-		shadeClose: 1,
-		scrollbar: false,
-		id: 'LAY_layuipro',
-		btn: ['关闭窗口'],
-		btnAlign: 'c',
-		moveType: 1,
-		content: '<div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;">\
-			<b><% nvram_get("productid"); %> - 科学上网插件 - ' + db_ss["ss_basic_version_local"] + '</b><br \><br \>\
-			本插件是支持\
-			<a target="_blank" href="https://github.com/shadowsocks/shadowsocks-libev"><u>SS</u></a>\
-			、<a target="_blank" href="https://github.com/shadowsocksrr/shadowsocksr-libev"><u>SSR</u></a>\
-			、<a target="_blank" href="https://github.com/v2ray/v2ray-core"><u>V2ray</u></a>\
-			、<a target="_blank" href="https://github.com/XTLS/xray-core"><u>Xray</u></a>\
-			、<a target="_blank" href="https://github.com/trojan-gfw/trojan"><u>Trojan</u></a>\
-			七种客户端的科学上网、游戏加速工具。<br \><br \>\
-			本插件支持以Asuswrt、Asuswrt-Merlin为基础的，带软件中心的固件，目前固件均由<a style="color:#e7bd16" target="_blank" href="https://www.koolcenter.com/">https:\/\/www.koolcenter.com/</a>提供。<br \><br \>\
-			使用本插件有任何问题，可以前往<a style="color:#e7bd16" target="_blank" href="https://github.com/hq450/fancyss/issues"><u>github的issue页面</u></a>反馈~<br \><br \>\
-			● 插件交流：<a style="color:#e7bd16" target="_blank" href="https://t.me/+PzdfDBssIIFmMThl"><u>加入telegram群组</u></a><br \><br \>\
-			我们的征途是星辰大海 ^_^</div>'
-	});
+    var version = window.FANCYSS_AC3100.version;
+    layer.open({type:1, title:'fancyss AC3100 维护版', area:'600px', shade:0.8,
+        shadeClose:true, btn:['关闭窗口'], btnAlign:'c',
+        content:'<div style="padding:28px;line-height:26px;background:#393D49;color:#fff">' +
+            '<b>RT-AC3100 维护版 v' + version + '</b><br><br>' +
+            '由 angelineage 维护，基于 fancyss，专用于 ASUS RT-AC3100 arm_lite。<br>' +
+            '提供无广告界面、旧内核运行状态与国内外连接检测、Web 落地延迟、规则更新和实时日志。<br><br>' +
+            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/fancyss-ac3100">项目主页</a> · ' +
+            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/fancyss-ac3100/blob/main/CHANGELOG.md">更新日志</a> · ' +
+            '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/fancyss-ac3100/issues">问题反馈</a></div>'
+    });
 }
 function open_subscription_manager_from_node_tip(index) {
 	if (typeof layer != "undefined" && layer.close && index) {

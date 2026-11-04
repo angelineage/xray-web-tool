@@ -680,7 +680,7 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
 <script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
-<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=ac3100-0.1.0"></script>
+<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=ac3100-maint2"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/softcenter.js"></script>
@@ -13180,7 +13180,7 @@ function updatelist(arg) {
 }
 function version_show() {
     var version = window.FANCYSS_AC3100.version;
-    $("#ss_version_show").text("RT-AC3100 维护版 " + version + "（上游 3.5.30）");
+
     $("#updateBtn").text("维护版 v" + version);
 }
 function message_show() {
@@ -15761,9 +15761,7 @@ function toggleKeyMask(o, show){
 															<div id="update_button" style="display:table-cell;float: left;position: absolute;margin-left:70px;padding: 5.5px 0px;">
 																<a id="updateBtn" type="button" class="ss_btn" style="cursor:pointer" onclick="update_ss()">检查并更新</a>
 															</div>
-															<div id="ss_version_show" style="display:table-cell;float: left;position: absolute;margin-left:170px;padding: 5.5px 0px;">
-																<a><i>当前版本：</i></a>
-															</div>
+															
 															<div style="display:table-cell;float: left;margin-left:270px;position: absolute;padding: 5.5px 0px;">
 																<a type="button" class="ss_btn" target="_blank" href="https://github.com/angelineage/fancyss-ac3100/blob/main/CHANGELOG.md">更新日志</a>
 															</div>
