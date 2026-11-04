@@ -454,8 +454,8 @@ case $act in
 2)
 	true > ${LOG_FILE}
 	backup_tar >> ${LOG_FILE}
-	sleep 1
-	sleep 2	
+	ret=$?
+	[ "$ret" = 0 ] || echo_date "打包失败，请检查上述日志。" >> ${LOG_FILE}
 	echo XU6J03M6 >> ${LOG_FILE}
 	;;
 3)
