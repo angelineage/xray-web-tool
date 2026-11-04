@@ -4611,7 +4611,7 @@ function show_node_migration_notice() {
 		"检测到本次版本已完成节点数据结构升级：",
 		"1. 老版本 fancyss 无法直接识别新的节点存储结构；",
 		"2. 如果未来需要回退旧版本，请先下载“旧版兼容备份”；",
-		"3. 关闭此窗口后，可到【附加功能】 - 【备份/恢复】继续导出“旧版兼容配置”和“新版本JSON配置”；",
+		"3. 关闭此窗口后，可到【附加功能】 - 【备份/恢复】继续导出配置；",
 		"4. 建议回退旧版本前，先在当前新版本导出一次最新配置。"
 	].join("<br>");
 	prepare_migration_notice_downloads(function() {
@@ -16630,12 +16630,10 @@ function toggleKeyMask(o, show){
 														$('#table_addons').forms([
 															{ td: '<tr><td class="smth" style="font-weight: bold;" colspan="2">备份/恢复</td></tr>'},
 															{ title: '导出fancyss配置', hint:'24', multi: [
-																{ suffix:'<input type="button" class="ss_btn" style="cursor:pointer;width:auto;min-width:148px;padding:5px 12px;" onclick="download_route_file(1);" value="导出旧版兼容配置">'},
-																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;width:auto;min-width:148px;padding:5px 12px;" onclick="download_route_file(12);" value="导出新版本JSON配置">'},
+																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;width:auto;min-width:148px;padding:5px 12px;" onclick="download_route_file(12);" value="导出配置">'},
 																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;" onclick="remove_SS_node();" value="清空配置">'},
 																{ suffix:'&nbsp;<input type="button" class="ss_btn" style="cursor:pointer;" onclick="download_route_file(2);" value="打包插件">'},
 															]},
-															{ td: '<tr><td></td><td style="font-size:11px;color:#A0A0A0;line-height:1.8;">旧版兼容配置：用于回退旧版 fancyss 恢复；新版本JSON配置：用于当前新版本原生恢复。</td></tr>'},
 															{ title: '恢复fancyss配置', hint:'24', multi: [
 																{ suffix:'<input style="color:#FFCC00;*color:#000;width: 200px;" id="ss_file" type="file" name="file"/>'},
 																{ suffix:'<img id="loadingicon" style="margin-left:5px;margin-right:5px;display:none;" src="/images/InternetScan.gif"/>'},
