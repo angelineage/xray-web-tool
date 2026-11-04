@@ -31,7 +31,9 @@ read) log_snapshot "$2" ;;
 	payload="$(log_snapshot "$3")" || exit 2
 	# Older httpdb wraps the response verbatim in a JSON string. JSON text is
 	# unsafe there; transport one base64 token, then decode in the browser.
-	WIRE_DIR=$(mktemp -d /tmp/fss_log_response.XXXXXX) || exit 1
+	umask 077
+	WIRE_DIR="/tmp/fss_log_response.${REQUEST_ID}.$$"
+	mkdir "${WIRE_DIR}" || exit 1
 	trap 'rm -f "${WIRE_DIR}/body"; rmdir "${WIRE_DIR}" 2>/dev/null' EXIT
 	trap 'exit 1' INT TERM
 	{
