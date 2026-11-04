@@ -7666,6 +7666,7 @@ function poll_text_file(opts){
 	}
 	state.xhr = $.ajax({
 		url: opts.url,
+		data: typeof opts.data === "function" ? opts.data() : opts.data,
 		type: opts.type || "GET",
 		dataType: opts.dataType || "text",
 		async: true,
@@ -14282,9 +14283,13 @@ function get_realtime_log() {
 	poll_text_file({
 		key: "realtime_log",
 		reset: true,
-		url: '/_temp/ss_log.txt',
-		dataType: 'text',
+		url: '/_api/',
+        type: 'POST',
+        dataType: 'json',
+        data: function() { return JSON.stringify({id:Math.floor(Math.random()*100000000),method:"ss_log.sh",params:["read","plugin"],fields:{}}); },
 		onSuccess: function(response, state) {
+            try { response = FssLogViewer.decode(response.result).text; }
+            catch (error) { return {done:false, delay:1000}; }
 			var retArea = E("log_content3");
 			if (response.search("XU6J03M6") != -1) {
 				retArea.value = response.myReplace("XU6J03M6", " ");
