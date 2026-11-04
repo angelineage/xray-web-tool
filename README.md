@@ -59,11 +59,12 @@ git diff --stat
 - `main`：维护主线。
 - `upstream-3.5.30`：原始导入基准。
 - `v0.1.0`：首个维护版本。
+- `v0.1.1`：接入个人公开仓库与在线规则源。
 
 后续流程：
 
 ```sh
-python tools/version.py 0.1.1
+python tools/version.py 0.1.2
 # 修改代码、更新 CHANGELOG.md，运行测试并提交
 git add .
 git commit -m "Describe the change"
