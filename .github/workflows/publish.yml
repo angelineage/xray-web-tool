@@ -1,0 +1,39 @@
+name: Publish Xray Web Tool
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing verified version tag
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+      - run: python -m unittest discover -s tests -v
+      - run: node tests/test_ui.cjs
+      - run: node tests/test_probe.cjs
+      - run: python tools/build.py
+      - name: Publish verified tag assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+        run: |
+          test "$RELEASE_TAG" = "v$(python -c 'import json; print(json.load(open("maintenance.json"))["version"])')"
+          VERSION="${RELEASE_TAG#v}"
+          git archive --format=tar.gz --prefix=xray-web-tool/ -o "dist/xray-web-tool-source-${VERSION}.tar.gz" HEAD
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "Xray Web Tool ${RELEASE_TAG}" --notes-file CHANGELOG.md
+          gh release upload "$RELEASE_TAG" "dist/xray_web_tool_arm_lite_ac3100_${VERSION}.tar.gz" "dist/xray-web-tool-source-${VERSION}.tar.gz" dist/SHA256SUMS.txt dist/build-manifest.json --clobber
