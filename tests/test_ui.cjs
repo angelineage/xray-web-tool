@@ -67,3 +67,5 @@ assert.equal(JSON.parse('{"result":"'+statusEscaped+'"}').result,statusText);
 console.log('Legacy status JSON escape check passed.');
 
 assert.doesNotMatch(html,/RT-AC3100 兼容检测|性能优化/);
+
+assert.match(html,/#tablet_11 > div, #tablet_11 > div \*, #tablet_11 > small \{ color:#ffcc00 !important; \}/);
