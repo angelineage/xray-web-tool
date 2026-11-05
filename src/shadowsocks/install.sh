@@ -301,10 +301,10 @@ handle_websocketd_after_install() {
 	fi
 	if is_fancyss_self_update_install; then
 		if [ -x "/tmp/fancyss_deferred_websocketd/websocketd" ]; then
-			echo_date "检测到 fancyss 自更新场景，延后静默切换 websocketd，避免中断当前 WebSocket 日志。"
+			echo_date "检测到 Xray Web Tool 自更新场景，延后静默切换 websocketd，避免中断当前 WebSocket 日志。"
 			schedule_websocketd_after_self_update
 		else
-			echo_date "检测到 fancyss 自更新场景，本次无需切换 websocketd。"
+			echo_date "检测到 Xray Web Tool 自更新场景，本次无需切换 websocketd。"
 		fi
 		return 0
 	fi
@@ -570,453 +570,31 @@ cleanup_legacy_smartdns_user_configs() {
 		return 0
 	fi
 	if [ -n "$(find /koolshare/ss/rules -maxdepth 1 -type f -name 'smartdns_smrt_*_user.conf' 2>/dev/null)" ];then
-		echo_date "检测到旧版 fancyss（${old_ver}）的自定义 smartdns 配置。"
-		echo_date "3.5.6 起 smartdns 改为由 fancyss 按前端设置动态生成配置。"
+		echo_date "检测到旧版自定义 SmartDNS 配置。"
+		echo_date "Xray Web Tool 会根据页面上的 DNS 设置生成 SmartDNS 配置。"
 		echo_date "旧版 smartdns 自定义模板将被移除，升级后请在 smartdns 的 chn / gfw DNS 选择界面重新调整上游。"
 		find /koolshare/ss/rules -maxdepth 1 -type f -name 'smartdns_smrt_*_user.conf' -delete 2>/dev/null
 	fi
 }
 
 platform_test(){
-	# 带koolshare文件夹，有httpdb和skipdb的固件位支持固件
-	if [ -d "/koolshare" -a -x "/koolshare/bin/httpdb" -a -x "/usr/bin/skipd" ];then
-		echo_date "机型：${MODEL} ${FW_TYPE_NAME} 符合安装要求，开始安装插件！"
-	else
+	if [ ! -d "/koolshare" ] || [ ! -x "/koolshare/bin/httpdb" ] || [ ! -x "/usr/bin/skipd" ]; then
+		echo_date "Xray Web Tool 需要支持软件中心的梅林固件。"
 		exit_install 1
 	fi
-
-	# 继续判断各个固件的内核和架构
-	PKG_ARCH=$(cat ${DIR}/.valid)
 	ROT_ARCH=$(uname -m)
 	KEL_VERS=$(uname -r)
-	PKG_NAME=$(get_pkg_field_from_file /tmp/shadowsocks/webs/Module_shadowsocks.asp "NAME")
-	PKG_ARCH=$(get_pkg_field_from_file /tmp/shadowsocks/webs/Module_shadowsocks.asp "ARCH")
-	PKG_TYPE=$(get_pkg_field_from_file /tmp/shadowsocks/webs/Module_shadowsocks.asp "TYPE")
-
-	# fancyss_arm
-	if [ "${PKG_ARCH}" == "arm" ]; then
-		case "${LINUX_VER}" in
-			"26")
-				if [ "${ROT_ARCH}" == "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-				else
-					echo_date "架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"41"|"419")
-				if [ "${ROT_ARCH}" == "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_full或者fancyss_hnd_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				elif [ "${ROT_ARCH}" == "aarch64" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_v8_full或者fancyss_hnd_v8_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				else
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"44")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_qca_full或者fancyss_qca_lite！"		
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_qca"
-				exit_install 1
-				;;
-			"54")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				case "${MODEL}" in
-					"ZenWiFi_BD4")
-						echo_date "建议使用fancyss_ipq32_full或者fancyss_ipq32_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq32"
-						exit_install 1
-						;;
-					"TUF_6500")
-						echo_date "建议使用fancyss_ipq64_full或者fancyss_ipq64_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq64"
-						exit_install 1
-						;;
-					"TX-AX6000"|"TUF-AX4200Q"|"RT-AX57_Go"|"GS7"|"ZenWiFi_BT8P"|"GS7_Air"|"GS-BE7200X")
-						echo_date "建议使用fancyss_mtk_full或者fancyss_mtk_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_mtk"
-						exit_install 1
-						;;
-					*)
-						echo_date "原因：暂不支持你的路由器型号：${MODEL}，请联系插件作者！"		
-						exit_install 1
-						;;
-				esac
-				;;
-			*)
-				echo_date "内核：${KEL_VERS}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				exit_install 1
-				;;
-		esac
-	fi
-	
-	# fancyss_hnd
-	if [ "${PKG_ARCH}" = "hnd" ]; then
-		case "${LINUX_VER}" in
-			"41"|"419")
-				if [ "${ROT_ARCH}" = "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-				elif [ "${ROT_ARCH}" = "aarch64" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-					echo_date
-					echo_date "----------------------------------------------------------------------"
-					echo_date "你的机型是${ROT_ARCH}架构，当前使用的是32位版本的fancyss！"
-					echo_date "建议使用64位的fancyss，如fancyss_hnd_v8_full或者fancyss_hnd_v8_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd_v8"
-					echo_date "----------------------------------------------------------------------"
-					echo_date
-					echo_date "继续安装32位的fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-				else
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"26")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_arm_full或者fancyss_arm_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_arm"
-				exit_install 1
-				;;
-			"44")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_qca_full或者fancyss_qca_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_qca"
-				exit_install 1
-				;;
-			"54")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				case "${MODEL}" in
-					"ZenWiFi_BD4")
-						echo_date "建议使用fancyss_ipq32_full或者fancyss_ipq32_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq32"
-						exit_install 1
-						;;
-					"TUF_6500")
-						echo_date "建议使用fancyss_ipq64_full或者fancyss_ipq64_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq64"
-						exit_install 1
-						;;
-					"TX-AX6000"|"TUF-AX4200Q"|"RT-AX57_Go"|"GS7"|"ZenWiFi_BT8P"|"GS7_Air"|"GS-BE7200X")
-						echo_date "建议使用fancyss_mtk_full或者fancyss_mtk_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_mtk"
-						exit_install 1
-						;;
-					*)
-						echo_date "原因：暂不支持你的路由器型号：${MODEL}，请联系插件作者！"		
-						exit_install 1
-						;;
-				esac
-				;;
-			*)
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				exit_install 1
-				;;
-		esac
-	fi
-
-	# fancyss_hnd_v8
-	if [ "${PKG_ARCH}" = "hnd_v8" ]; then
-		case "${LINUX_VER}" in
-			"41"|"419")
-				if [ "${ROT_ARCH}" = "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！"
-					echo_date "原因：无法在32位的路由器上使用64位程序的fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-					echo_date "建议使用fancyss_hnd_full或者fancyss_hnd_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					echo_date "退出安装！"
-					exit_install 1
-				elif [ "${ROT_ARCH}" = "aarch64" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-				else
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"26")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_arm_full或者fancyss_arm_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_arm"
-				exit_install 1
-				;;
-			"44")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_qca_full或者fancyss_qca_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_qca"
-				exit_install 1
-				;;
-			"54")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				case "${MODEL}" in
-					"ZenWiFi_BD4")
-						echo_date "建议使用fancyss_ipq32_full或者fancyss_ipq32_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq32"
-						exit_install 1
-						;;
-					"TUF_6500")
-						echo_date "建议使用fancyss_ipq64_full或者fancyss_ipq64_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq64"
-						exit_install 1
-						;;
-					"TX-AX6000"|"TUF-AX4200Q"|"RT-AX57_Go"|"GS7"|"ZenWiFi_BT8P"|"GS7_Air"|"GS-BE7200X")
-						echo_date "建议使用fancyss_mtk_full或者fancyss_mtk_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_mtk"
-						exit_install 1
-						;;
-					*)
-						echo_date "原因：暂不支持你的路由器型号：${MODEL}，请联系插件作者！"		
-						exit_install 1
-						;;
-				esac
-				;;
-			*)
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				exit_install 1
-				;;
-		esac
-	fi
-
-	# fancyss_qca
-	if [ "${PKG_ARCH}" = "qca" ]; then
-		case "${LINUX_VER}" in
-			"44")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-				;;
-			"26")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_arm_full或者fancyss_arm_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_arm"
-				exit_install 1
-				;;
-			"41"|"419")
-				if [ "${ROT_ARCH}" = "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_full或者fancyss_hnd_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				elif [ "${ROT_ARCH}" = "aarch64" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_v8_full或者fancyss_hnd_v8_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				else
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"54")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				case "${MODEL}" in
-					"ZenWiFi_BD4")
-						echo_date "建议使用fancyss_ipq32_full或者fancyss_ipq32_lite！"
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq32"
-						exit_install 1
-						;;
-					"TUF_6500")
-						echo_date "建议使用fancyss_ipq64_full或者fancyss_ipq64_lite！"
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq64"
-						exit_install 1
-						;;
-					"TX-AX6000"|"TUF-AX4200Q"|"RT-AX57_Go"|"GS7"|"ZenWiFi_BT8P"|"GS7_Air"|"GS-BE7200X")
-						echo_date "建议使用fancyss_mtk_full或者fancyss_mtk_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_mtk"
-						exit_install 1
-						;;
-					*)
-						echo_date "原因：暂不支持你的路由器型号：${MODEL}，请联系插件作者！"
-						exit_install 1
-						;;
-				esac
-				;;
-			*)
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				exit_install 1
-				;;
-		esac
-	fi
-
-	# fancyss_mtk
-	if [ "${PKG_ARCH}" == "mtk" ]; then
-		case "${LINUX_VER}" in
-			"54")
-				case "${MODEL}" in
-					"ZenWiFi_BD4")
-						echo_date "建议使用fancyss_ipq32_full或者fancyss_ipq32_lite！"	
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq32"
-						exit_install 1
-						;;
-					"TUF_6500")
-						echo_date "建议使用fancyss_ipq64_full或者fancyss_ipq64_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq64"
-						exit_install 1
-						;;
-					"TX-AX6000"|"TUF-AX4200Q"|"RT-AX57_Go"|"GS7"|"ZenWiFi_BT8P"|"GS7_Air"|"GS-BE7200X")
-						echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-						;;
-					*)
-						echo_date "原因：暂不支持你的路由器型号：${MODEL}，请联系插件作者！"		
-						exit_install 1
-						;;
-				esac
-				;;
-			"26")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_arm_full或者fancyss_arm_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_arm"
-				exit_install 1
-				;;
-			"41"|"419")
-				if [ "${ROT_ARCH}" == "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_full或者fancyss_hnd_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				elif [ "${ROT_ARCH}" == "aarch64" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_v8_full或者fancyss_hnd_v8_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				else
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"44")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_hnd_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_qca_full或者fancyss_qca_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_qca"
-				exit_install 1
-				;;
-			*)
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				exit_install 1
-				;;
-		esac
-	fi
-
-	# fancyss_ipq32
-	if [ "${PKG_ARCH}" = "ipq32" ]; then
-		case "${LINUX_VER}" in
-			"54")
-				case "${MODEL}" in
-					"ZenWiFi_BD4")
-						echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-						;;
-					"TUF_6500")
-						echo_date "建议使用fancyss_ipq64_full或者fancyss_ipq64_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq64"
-						exit_install 1
-						;;
-					"TX-AX6000"|"TUF-AX4200Q"|"RT-AX57_Go"|"GS7"|"ZenWiFi_BT8P"|"GS7_Air"|"GS-BE7200X")
-						echo_date "建议使用fancyss_mtk_full或者fancyss_mtk_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_mtk"
-						exit_install 1
-						;;
-					*)
-						echo_date "原因：暂不支持你的路由器型号：${MODEL}，请联系插件作者！"		
-						exit_install 1
-						;;
-				esac
-				;;
-			"26")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_arm_full或者fancyss_arm_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_arm"
-				exit_install 1
-				;;
-			"41"|"419")
-				if [ "${ROT_ARCH}" = "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_full或者fancyss_hnd_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				elif [ "${ROT_ARCH}" = "aarch64" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_v8_full或者fancyss_hnd_v8_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				else
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"44")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_hnd_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_qca_full或者fancyss_qca_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_qca"
-				exit_install 1
-				;;
-			*)
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				exit_install 1
-				;;
-		esac
-	fi
-
-	# fancyss_ipq64
-	if [ "${PKG_ARCH}" = "ipq64" ]; then
-		case "${LINUX_VER}" in
-			"54")
-				case "${MODEL}" in
-					"ZenWiFi_BD4")
-						echo_date "建议使用fancyss_ipq32_full或者fancyss_ipq32_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_ipq32"
-						exit_install 1
-						;;
-					"TUF_6500")
-						echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，安装fancyss_${PKG_ARCH}_${PKG_TYPE}！"
-						;;
-					"TX-AX6000"|"TUF-AX4200Q"|"RT-AX57_Go"|"GS7"|"ZenWiFi_BT8P"|"GS7_Air"|"GS-BE7200X")
-						echo_date "建议使用fancyss_mtk_full或者fancyss_mtk_lite！"		
-						echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_mtk"
-						exit_install 1
-						;;
-					*)
-						echo_date "原因：暂不支持你的路由器型号：${MODEL}，请联系插件作者！"		
-						exit_install 1
-						;;
-				esac
-				;;
-			"26")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_arm_full或者fancyss_arm_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_arm"
-				exit_install 1
-				;;
-			"41"|"419")
-				if [ "${ROT_ARCH}" = "armv7l" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_full或者fancyss_hnd_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				elif [ "${ROT_ARCH}" = "aarch64" ]; then
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-					echo_date "建议使用fancyss_hnd_v8_full或者fancyss_hnd_v8_lite！"
-					echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_hnd"
-					exit_install 1
-				else
-					echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该架构！退出！"
-					exit_install 1
-				fi
-				;;
-			"44")
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_hnd_${PKG_TYPE}不适用于该内核版本！"
-				echo_date "建议使用fancyss_qca_full或者fancyss_qca_lite！"
-				echo_date "下载地址：https://github.com/hq450/fancyss_history_package/tree/master/fancyss_qca"
-				exit_install 1
-				;;
-			*)
-				echo_date "内核：${KEL_VERS}，架构：${ROT_ARCH}，fancyss_${PKG_ARCH}_${PKG_TYPE}不适用于该内核版本！"
-				exit_install 1
-				;;
-		esac
-	fi
+	PKG_ARCH=$(get_pkg_field_from_file "${DIR}/webs/Module_shadowsocks.asp" "ARCH")
+	PKG_TYPE=$(get_pkg_field_from_file "${DIR}/webs/Module_shadowsocks.asp" "TYPE")
+	case "${ROT_ARCH}:${KEL_VERS}:${PKG_ARCH}:${PKG_TYPE}" in
+		armv7l:2.6.36:arm:lite|armv7l:2.6.36.*:arm:lite) ;;
+		*)
+			echo_date "Xray Web Tool 安装包仅适用于 RT-AC3100 arm_lite，内核需为 2.6.36。"
+			echo_date "当前架构 ${ROT_ARCH}，内核 ${KEL_VERS}，安装已停止。"
+			exit_install 1
+			;;
+	esac
+	echo_date "${MODEL} ${FW_TYPE_NAME} 符合 Xray Web Tool 安装要求。"
 }
 
 set_skin(){
@@ -1056,7 +634,7 @@ exit_install(){
 				rm -rf /tmp/fancyss_deferred_websocketd >/dev/null 2>&1 || true
 			fi
 			rm -f /tmp/fancyss_websocketd_changed >/dev/null 2>&1 || true
-			echo_date "fancyss项目地址：https://github.com/hq450/fancyss"
+			echo_date "Xray Web Tool 项目地址：https://github.com/angelineage/xray-web-tool"
 			echo_date "退出安装！"
 			exit 1
 			;;
@@ -1310,7 +888,7 @@ lite2full(){
 		return
 	fi
 	
-	echo_date "检测到上次安装fancyss lite备份的不支持节点，准备恢复！"
+	echo_date "检测到上次安装Xray Web Tool lite备份的不支持节点，准备恢复！"
 	if [ "$(fss_detect_storage_schema 2>/dev/null)" = "2" ];then
 		append_backup_nodes_schema2 "/koolshare/configs/fanyss/fancyss_kv.json"
 		echo_date "节点恢复成功！"
@@ -1482,18 +1060,22 @@ install_now(){
 
 	#local PKG_ARCH_OLD=$(cat /koolshare/webs/Module_shadowsocks.asp 2>/dev/null | grep -Eo "PKG_ARCH=.+" | awk -F"=" '{print $2}' |sed 's/"//g')
 	#local PKG_TYPE_OLD=$(cat /koolshare/webs/Module_shadowsocks.asp 2>/dev/null | grep -Eo "PKG_TYPE=.+" | awk -F"=" '{print $2}' |sed 's/"//g')
-	local TITLE_OLD=$(dbus get softcenter_module_shadowsocks_title)
 	local PKG_TYPE_OLD=""
 
 	# print message
 	local TITLE_NEW="Xray Web Tool"
-	local DESCR="angelineage 维护 · RT-AC3100 arm_lite · 连接检测、规则更新与实时日志"
-	echo_date "安装版本：${PKG_NAME}_${PKG_ARCH}_${PKG_TYPE}_${PLVER}"
+	local DESCR="angelineage 维护 · RT-AC3100 arm_lite · Xray 代理、实时流量与规则更新"
+	local MAINT_VERSION
+	MAINT_VERSION=$("${DIR}/bin/jq" -er '.version | select(type == "string" and test("^[0-9]+[.][0-9]+[.][0-9]+(-[a-z0-9.]+)?$"))' "${DIR}/ss/maintenance.json" 2>/dev/null) || {
+		echo_date "Xray Web Tool 安装包缺少有效的维护版本信息。"
+		exit_install 1
+	}
+	echo_date "安装插件版本：${TITLE_NEW} v${MAINT_VERSION}（RT-AC3100 arm_lite）"
 	
 	# stop first
 	local ENABLE=$(dbus get ss_basic_enable)
 	if [ "${ENABLE}" == "1" -a -f "/koolshare/ss/ssconfig.sh" ];then
-		echo_date "安装前先关闭${TITLE_OLD}插件，保证文件更新成功！"
+		echo_date "安装前停止当前代理服务。"
 		sh /koolshare/ss/ssconfig.sh stop >/dev/null 2>&1
 	fi
 
@@ -1521,7 +1103,7 @@ install_now(){
 
 	# full → lite, backup nodes
 	if [ "${PKG_TYPE}" == "lite" -a "${OLD_TYPE}" == "full" ];then
-		echo_date "当前版本：full，即将安装：lite"
+		echo_date "当前安装规格为 full，即将切换到 arm_lite。"
 		full2lite
 	fi
 	
@@ -1946,7 +1528,7 @@ install_now(){
 	fi
 
 	if [ "${FORCE_LEGACY_CACHE_RESET}" = "1" ];then
-		echo_date "检测到旧版 fancyss（${OLD_VER} < 3.6.0），强制清理节点配置缓存和 webtest 缓存..."
+		echo_date "正在重建节点配置缓存和延迟测试缓存。"
 		invalidate_runtime_caches_after_install
 		echo_date "重建节点运行缓存..."
 		fss_refresh_node_json_cache >/dev/null 2>&1 || true
@@ -1959,19 +1541,19 @@ install_now(){
 	# dbus value
 	echo_date "设置插件安装参数..."
 	dbus set ss_basic_version_local="${PLVER}"
-	dbus set fss_ac3100_version="$(/koolshare/bin/jq -r '.version' /koolshare/ss/maintenance.json)"
-	dbus set softcenter_module_${module}_version="$(/koolshare/bin/jq -r '.version' /koolshare/ss/maintenance.json)"
+	dbus set fss_ac3100_version="${MAINT_VERSION}"
+	dbus set softcenter_module_${module}_version="${MAINT_VERSION}"
 	dbus set softcenter_module_${module}_install="4"
 	dbus set softcenter_module_${module}_name="${module}"
 	dbus set softcenter_module_${module}_title="${TITLE_NEW}"
 	dbus set softcenter_module_${module}_description="${DESCR}"
 	
 	# finish
-	echo_date "${TITLE_NEW}插件安装安装成功！"
+	echo_date "${TITLE_NEW} v${MAINT_VERSION} 安装成功。"
 
 	# restart
 	if [ "${ENABLE}" == "1" -a -f "/koolshare/ss/ssconfig.sh" ];then
-		echo_date 重启科学上网插件！
+		echo_date "正在重启 Xray Web Tool。"
 		sh /koolshare/ss/ssconfig.sh restart
 		handle_websocketd_after_install
 	else

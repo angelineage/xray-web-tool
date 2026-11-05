@@ -678,7 +678,7 @@ prepare_system() {
 	if [ "$(nvram get sw_mode)" != "1" ]; then
 		echo_date "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 		echo_date "+          无法启用插件，因为当前路由器工作在非无线路由器模式下          +"
-		echo_date "+     科学上网插件工作方式为透明代理，需要在NAT下，即路由模式下才能工作    +"
+		echo_date "+     Xray Web Tool工作方式为透明代理，需要在NAT下，即路由模式下才能工作    +"
 		echo_date "+            请前往【系统管理】- 【系统设置】去切换路由模式！           +"
 		echo_date "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 		close_in_five
@@ -690,7 +690,7 @@ prepare_system() {
 		if [ "$(nvram get jffs2_scripts)" != "1" ]; then
 			echo_date "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 			echo_date "+     发现你未开启Enable JFFS custom scripts and configs选项！     +"
-			echo_date "+    【软件中心】和【科学上网】插件都需要此项开启才能正常使用！！         +"
+			echo_date "+    【软件中心】和【Xray Web Tool】插件都需要此项开启才能正常使用！！         +"
 			echo_date "+     请前往【系统管理】- 【系统设置】去开启，并重启路由器后重试！！      +"
 			echo_date "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 			close_in_five
@@ -1208,7 +1208,7 @@ rewrite_xray_like_outbound_server() {
 # ================================= ss stop ===============================
 
 restore_conf() {
-	echo_date "删除fancyss相关的名单配置文件..."
+	echo_date "删除Xray Web Tool相关的名单配置文件..."
 	rm -f /jffs/configs/dnsmasq.d/custom.conf
 	rm -f /jffs/configs/dnsmasq.d/ss_host.conf
 	rm -f /jffs/configs/dnsmasq.d/ss_server.conf
@@ -5086,7 +5086,7 @@ start_anytls(){
 		echo_date "重要提醒！！"
 		echo_date ""
 		echo_date "检测到你需要使用AnyTLS！但是当前/koolshare/bin目录下缺少anytls-zig二进制文件！"
-		echo_date "请安装fancyss full版本，或确认对应平台的anytls-zig已经正确安装。"
+		echo_date "当前 arm_lite 安装包不提供 AnyTLS 核心。"
 		echo_date "当前平台：${pkg_arch}"
 		echo_date ""
 		echo_date "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -5129,10 +5129,10 @@ write_cron_job() {
 	# 定时规则更新
 	sed -i '/ssupdate/d' /var/spool/cron/crontabs/* >/dev/null 2>&1
 	if [ "1" == "${ss_basic_rule_update}" ]; then
-		echo_date "⏰️fancyss规则定时更新任务启用，每天${ss_basic_rule_update_time}点自动检测更新规则."
+		echo_date "⏰️Xray Web Tool规则定时更新任务启用，每天${ss_basic_rule_update_time}点自动检测更新规则."
 		cru a ssupdate "0 ${ss_basic_rule_update_time} * * * /bin/sh /koolshare/scripts/ss_rule_update.sh"
 	else
-		echo_date "❎️fancyss规则定时更新任务未启用！"
+		echo_date "❎️Xray Web Tool规则定时更新任务未启用！"
 	fi
 	
 	# 定时订阅
@@ -5140,29 +5140,29 @@ write_cron_job() {
 	if [ "${ss_basic_node_update}" == "1" ]; then
 		if [ "${ss_basic_node_update_day}" == "0" ]; then
 			cru a ssnodeupdate "0 ${ss_basic_node_update_hr} * * * /koolshare/scripts/ss_node_subscribe.sh fancyss 3"
-			echo_date "⏰️fancyss规则定时更新任务启用，每天${ss_basic_node_update_hr}点自动更新订阅。"
+			echo_date "⏰️Xray Web Tool规则定时更新任务启用，每天${ss_basic_node_update_hr}点自动更新订阅。"
 		else
 			cru a ssnodeupdate "0 ${ss_basic_node_update_hr} * * ${ss_basic_node_update_day} /koolshare/scripts/ss_node_subscribe.sh fancyss 3"
-			echo_date "⏰️fancyss规则定时更新任务启用，每周${ss_basic_node_update_day}的${ss_basic_node_update_hr}点自动更新订阅。"
+			echo_date "⏰️Xray Web Tool规则定时更新任务启用，每周${ss_basic_node_update_day}的${ss_basic_node_update_hr}点自动更新订阅。"
 		fi
 	else
-		echo_date "❎️fancyss定时更新订阅节点任务未启用！"
+		echo_date "❎️Xray Web Tool定时更新订阅节点任务未启用！"
 	fi
 	
 	# 定时webtest
 	sed -i '/sslatencyjob/d' /var/spool/cron/crontabs/* >/dev/null 2>&1
 	if [ "${ss_basic_lt_cru_opts}" == "1" ]; then
-		echo_date "⏰️fancyss 节点web落地延迟检测任务启用，设置每隔${ss_basic_lt_cru_time}分钟检测一次..."
+		echo_date "⏰️Xray Web Tool 节点web落地延迟检测任务启用，设置每隔${ss_basic_lt_cru_time}分钟检测一次..."
 		sed -i '/sslatencyjob/d' /var/spool/cron/crontabs/* >/dev/null 2>&1
 		cru a sslatencyjob "*/${ss_basic_lt_cru_time} * * * * /koolshare/scripts/ss_webtest.sh 2"
 	else
-		echo_date "❎️fancyss节点web落地延迟检测任务未启用！"
+		echo_date "❎️Xray Web Tool节点web落地延迟检测任务未启用！"
 	fi
 }
 
 kill_cron_job() {
 	if [ -n "$(cru l | grep ssupdate)" ]; then
-		echo_date "删除fancyss规则定时更新任务..."
+		echo_date "删除Xray Web Tool规则定时更新任务..."
 		sed -i '/ssupdate/d' /var/spool/cron/crontabs/* >/dev/null 2>&1
 	fi
 	if [ -n "$(cru l | grep ssnodeupdate)" ]; then
@@ -6774,7 +6774,7 @@ write_numbers() {
 
 remove_ss_reboot_job() {
 	if [ -n "$(cru l | grep ss_reboot)" ]; then
-		echo_date "【科学上网】：删除插件自动重启定时任务..."
+		echo_date "【Xray Web Tool】：删除插件自动重启定时任务..."
 		sed -i '/ss_reboot/d' /var/spool/cron/crontabs/* >/dev/null 2>&1
 	fi
 }
@@ -6783,28 +6783,28 @@ set_ss_reboot_job() {
 	if [[ "${ss_reboot_check}" == "0" ]]; then
 		remove_ss_reboot_job
 	elif [[ "${ss_reboot_check}" == "1" ]]; then
-		echo_date "【科学上网】：设置每天${ss_basic_time_hour}时${ss_basic_time_min}分重启插件..."
+		echo_date "【Xray Web Tool】：设置每天${ss_basic_time_hour}时${ss_basic_time_min}分重启插件..."
 		cru a ss_reboot ${ss_basic_time_min} ${ss_basic_time_hour}" * * * /bin/sh /koolshare/ss/ssconfig.sh restart"
 	elif [[ "${ss_reboot_check}" == "2" ]]; then
-		echo_date "【科学上网】：设置每周${ss_basic_week}的${ss_basic_time_hour}时${ss_basic_time_min}分重启插件..."
+		echo_date "【Xray Web Tool】：设置每周${ss_basic_week}的${ss_basic_time_hour}时${ss_basic_time_min}分重启插件..."
 		cru a ss_reboot ${ss_basic_time_min} ${ss_basic_time_hour}" * * "${ss_basic_week}" /bin/sh /koolshare/ss/ssconfig.sh restart"
 	elif [[ "${ss_reboot_check}" == "3" ]]; then
-		echo_date "【科学上网】：设置每月${ss_basic_day}日${ss_basic_time_hour}时${ss_basic_time_min}分重启插件..."
+		echo_date "【Xray Web Tool】：设置每月${ss_basic_day}日${ss_basic_time_hour}时${ss_basic_time_min}分重启插件..."
 		cru a ss_reboot ${ss_basic_time_min} ${ss_basic_time_hour} ${ss_basic_day}" * * /bin/sh /koolshare/ss/ssconfig.sh restart"
 	elif [[ "${ss_reboot_check}" == "4" ]]; then
 		if [[ "${ss_basic_inter_pre}" == "1" ]]; then
-			echo_date "【科学上网】：设置每隔${ss_basic_inter_min}分钟重启插件..."
+			echo_date "【Xray Web Tool】：设置每隔${ss_basic_inter_min}分钟重启插件..."
 			cru a ss_reboot "*/"${ss_basic_inter_min}" * * * * /bin/sh /koolshare/ss/ssconfig.sh restart"
 		elif [[ "${ss_basic_inter_pre}" == "2" ]]; then
-			echo_date "【科学上网】：设置每隔${ss_basic_inter_hour}小时重启插件..."
+			echo_date "【Xray Web Tool】：设置每隔${ss_basic_inter_hour}小时重启插件..."
 			cru a ss_reboot "0 */"${ss_basic_inter_hour}" * * * /bin/sh /koolshare/ss/ssconfig.sh restart"
 		elif [[ "${ss_basic_inter_pre}" == "3" ]]; then
-			echo_date "【科学上网】：设置每隔${ss_basic_inter_day}天${ss_basic_inter_hour}小时${ss_basic_time_min}分钟重启插件..."
+			echo_date "【Xray Web Tool】：设置每隔${ss_basic_inter_day}天${ss_basic_inter_hour}小时${ss_basic_time_min}分钟重启插件..."
 			cru a ss_reboot ${ss_basic_time_min} ${ss_basic_time_hour}" */"${ss_basic_inter_day} " * * /bin/sh /koolshare/ss/ssconfig.sh restart"
 		fi
 	elif [[ "${ss_reboot_check}" == "5" ]]; then
 		check_custom_time=$(echo ss_basic_custom | base64_decode)
-		echo_date "【科学上网】：设置每天${check_custom_time}时的${ss_basic_time_min}分重启插件..."
+		echo_date "【Xray Web Tool】：设置每天${check_custom_time}时的${ss_basic_time_min}分重启插件..."
 		cru a ss_reboot ${ss_basic_time_min} ${check_custom_time}" * * * /bin/sh /koolshare/ss/ssconfig.sh restart"
 	fi
 }
@@ -6821,7 +6821,7 @@ ss_post_start() {
 	mkdir -p /koolshare/ss/postscripts && cd /koolshare/ss/postscripts
 	for i in $(find ./ -name 'P*' | sort); do
 		trap "" INT QUIT TSTP EXIT
-		echo_date ------------- 【科学上网】 启动后触发脚本: $i -------------
+		echo_date ------------- 【Xray Web Tool】 启动后触发脚本: $i -------------
 		if [ -r "$i" ]; then
 			$i start
 		fi
@@ -6835,7 +6835,7 @@ ss_pre_stop() {
 	mkdir -p /koolshare/ss/postscripts && cd /koolshare/ss/postscripts
 	for i in $(find ./ -name 'P*' | sort -r); do
 		trap "" INT QUIT TSTP EXIT
-		echo_date ------------- 【科学上网】 关闭前触发脚本: $i ------------
+		echo_date ------------- 【Xray Web Tool】 关闭前触发脚本: $i ------------
 		if [ -r "$i" ]; then
 			$i stop
 		fi
@@ -7074,9 +7074,9 @@ check_status() {
 }
 
 disable_ss() {
-	echo_date ======================= 梅林固件 - 【科学上网】 ========================
+	echo_date ======================= 梅林固件 - 【Xray Web Tool】 ========================
 	echo_date
-	echo_date ------------------------- 关闭【科学上网】 -----------------------------
+	echo_date ------------------------- 关闭【Xray Web Tool】 -----------------------------
 	ss_pre_stop
 	set_skin
 	dbus remove ss_basic_server_ip
@@ -7096,14 +7096,14 @@ disable_ss() {
 	dbus remove ss_basic_server_resolv_user
 	dbus remove ss_basic_lastru
 	dbus set ss_basic_status="0"
-	echo_date ------------------------ 【科学上网】已关闭 ----------------------------
+	echo_date ------------------------ 【Xray Web Tool】已关闭 ----------------------------
 }
 
 apply_ss() {
 	local shunt_hot_restart="0"
 	local shunt_prev_xray_json=""
 
-	echo_date ======================= 梅林固件 - 【科学上网】 ========================
+	echo_date ======================= 梅林固件 - 【Xray Web Tool】 ========================
 	echo_date
 	if [ "${ss_basic_status}" == "1" ];then
 		if shunt_hot_restart_eligible; then
@@ -7114,7 +7114,7 @@ apply_ss() {
 				echo_date "[hot-reload] 检测到 xray 分流热重载已启用，将在新配置生成后判断是否可保留当前 xray 进程。"
 			fi
 		fi
-		echo_date ------------------------- 关闭【科学上网】 -----------------------------
+		echo_date ------------------------- 关闭【Xray Web Tool】 -----------------------------
 		ss_pre_stop
 		stop_status
 		if [ "${shunt_hot_restart}" != "1" ]; then
@@ -7129,7 +7129,7 @@ apply_ss() {
 		kill_cron_job
 	fi
 	# pre-start
-	echo_date ------------------------- 启动【科学上网】 -----------------------------
+	echo_date ------------------------- 启动【Xray Web Tool】 -----------------------------
 	# start
 	FSS_SKIP_XRAY_PORT_CLEANUP=""
 	[ "${shunt_hot_restart}" = "1" ] && FSS_SKIP_XRAY_PORT_CLEANUP="1"
@@ -7203,7 +7203,7 @@ apply_ss() {
 	fi
 	# store current status
 	dbus set ss_basic_status="1"
-	echo_date ------------------------ 【科学上网】 启动完毕 ------------------------
+	echo_date ------------------------ 【Xray Web Tool】 启动完毕 ------------------------
 	FSS_SKIP_XRAY_PORT_CLEANUP=""
 	rm -f "${shunt_prev_xray_json}" >/dev/null 2>&1
 }
@@ -7225,9 +7225,9 @@ get_status() {
 	WAN_ACTION=$(ps | grep /jffs/scripts/wan-start | grep -v grep)
 	NAT_ACTION=$(ps | grep /jffs/scripts/nat-start | grep -v grep)
 	WEB_ACTION=$(ps | grep "ss_config.sh" | grep -v grep)
-	[ -n "${WAN_ACTION}" ] && echo_date "路由器开机触发fancyss重启！"
-	[ -n "${NAT_ACTION}" ] && echo_date "路由器防火墙触发fancyss重启！"
-	[ -n "${WEB_ACTION}" ] && echo_date "WEB提交操作触发fancyss重启！"
+	[ -n "${WAN_ACTION}" ] && echo_date "路由器开机触发Xray Web Tool重启！"
+	[ -n "${NAT_ACTION}" ] && echo_date "路由器防火墙触发Xray Web Tool重启！"
+	[ -n "${WEB_ACTION}" ] && echo_date "WEB提交操作触发Xray Web Tool重启！"
 
 	iptables -nvL PREROUTING -t nat
 	iptables -nvL OUTPUT -t nat
@@ -7243,13 +7243,13 @@ get_status() {
 apply_ss_by_nat() {
 	# 1. 开机的时候会触发，此时其它组件都没有准备，需要开启
 	# 2. 防火墙重启，重新拨号等会触发，此时其它组件都是ok的，只需要重启iptables
-	echo_date ======================= 梅林固件 - 【科学上网】 ========================
+	echo_date ======================= 梅林固件 - 【Xray Web Tool】 ========================
 	echo_date
 	echo_date "restart by nat!"
 	flush_iptables
 	load_iptables
 	echo_date
-	echo_date ------------------------ 【科学上网】 启动完毕 ------------------------
+	echo_date ------------------------ 【Xray Web Tool】 启动完毕 ------------------------
 }
 
 pick_start_stop_daemon(){
@@ -7343,12 +7343,12 @@ start)
 	# start on wan-start
 	set_lock
 	if [ "$ss_basic_enable" == "1" ]; then
-		logger "[软件中心]: wan-start启动科学上网插件！"
+		logger "[软件中心]: wan-start 启动 Xray Web Tool。"
 		start_ws
 		apply_ss 2>&1 | tee -a "$LOG_FILE" | tee -a "/tmp/upload/ss_wan_log.txt"
 		echo XU6J03M6 | tee -a "$LOG_FILE"
 	else
-		logger "[软件中心]: 科学上网插件未开启，不启动！"
+		logger "[软件中心]: Xray Web Tool 已停用。"
 	fi
 	unset_lock
 	;;
@@ -7356,10 +7356,10 @@ stop)
 	set_lock
 	disable_ss
 	echo_date
-	echo_date "你已经成功关闭科学上网服务~"
+	echo_date "你已经成功停止代理服务~"
 	echo_date "See you again!"
 	echo_date
-	echo_date ======================= 梅林固件 - 【科学上网】 ========================
+	echo_date ======================= 梅林固件 - 【Xray Web Tool】 ========================
 	unset_lock
 	;;
 restart)
@@ -7370,7 +7370,7 @@ restart)
 	echo_date
 	echo_date "Across the Great Wall we can reach every corner in the world!"
 	echo_date
-	echo_date ======================= 梅林固件 - 【科学上网】 ========================
+	echo_date ======================= 梅林固件 - 【Xray Web Tool】 ========================
 	unset_lock
 	;;
 flush_nat)

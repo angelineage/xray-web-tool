@@ -1,4 +1,5 @@
 #!/bin/sh
+REQUEST_ID="$1"
 
 # fancyss script for asuswrt/merlin based router with software center
 
@@ -729,7 +730,7 @@ ECHO_VERSION(){
 			printf '%-16s %-16s %s\n' "tuic-client" "$(run tuic-client -V|awk '{print $NF}')" "https://github.com/Itsusinn/tuic"
 		fi
 		if [ -x "/koolshare/bin/anytls-zig" ];then
-			print_bin_version_line "anytls-zig" "$(get_zig_tool_version /koolshare/bin/anytls-zig)" "fancyss Zig / AnyTLS 客户端"
+			print_bin_version_line "anytls-zig" "$(get_zig_tool_version /koolshare/bin/anytls-zig)" "AnyTLS 客户端"
 		fi
 		if [ -x "/koolshare/bin/ipt2socks" ];then
 			printf '%-16s %-16s %s\n' "ipt2socks" "$(run /koolshare/bin/ipt2socks -V|awk '{print $2}')" "https://github.com/zfl9/ipt2socks"
@@ -747,15 +748,15 @@ ECHO_VERSION(){
 	if [ -x "/koolshare/bin/smartdns" ];then
 		printf '%-16s %-16s %s\n' "smartdns" "$(run smartdns -v|awk '{print $2}')" "https://github.com/pymumu/smartdns"
 	fi
-	print_bin_version_line "node-tool" "$(get_zig_tool_version /koolshare/bin/node-tool)" "fancyss Zig / 节点运行产物构建"
-	print_bin_version_line "sub-tool" "$(get_zig_tool_version /koolshare/bin/sub-tool)" "fancyss Zig / 订阅解析器"
-	print_bin_version_line "xapi-tool" "$(get_zig_tool_version /koolshare/bin/xapi-tool)" "fancyss Zig / Xray API 客户端"
-	print_bin_version_line "status-tool" "$(get_zig_tool_version /koolshare/bin/status-tool)" "fancyss Zig / 运行状态探测"
-	print_bin_version_line "statusctl" "$(get_zig_tool_version /koolshare/bin/statusctl)" "fancyss Zig / status-tool 控制端"
-	print_bin_version_line "webtest-tool" "$(get_zig_tool_version /koolshare/bin/webtest-tool)" "fancyss Zig / 批量测速引擎"
-	print_bin_version_line "webtestctl" "$(get_zig_tool_version /koolshare/bin/webtestctl)" "fancyss Zig / webtest-tool 控制端"
-	print_bin_version_line "geotool" "$(get_zig_tool_version /koolshare/bin/geotool)" "fancyss Zig / geosite geoip 规则导出"
-	print_bin_version_line "websocketd" "$(get_zig_tool_version /koolshare/bin/websocketd)" "fancyss Zig / WebSocket 命令通道"
+	print_bin_version_line "node-tool" "$(get_zig_tool_version /koolshare/bin/node-tool)" "节点运行产物构建"
+	print_bin_version_line "sub-tool" "$(get_zig_tool_version /koolshare/bin/sub-tool)" "订阅解析器"
+	print_bin_version_line "xapi-tool" "$(get_zig_tool_version /koolshare/bin/xapi-tool)" "Xray API 客户端"
+	print_bin_version_line "status-tool" "$(get_zig_tool_version /koolshare/bin/status-tool)" "运行状态探测"
+	print_bin_version_line "statusctl" "$(get_zig_tool_version /koolshare/bin/statusctl)" "status-tool 控制端"
+	print_bin_version_line "webtest-tool" "$(get_zig_tool_version /koolshare/bin/webtest-tool)" "批量测速引擎"
+	print_bin_version_line "webtestctl" "$(get_zig_tool_version /koolshare/bin/webtestctl)" "webtest-tool 控制端"
+	print_bin_version_line "geotool" "$(get_zig_tool_version /koolshare/bin/geotool)" "geosite geoip 规则导出"
+	print_bin_version_line "websocketd" "$(get_zig_tool_version /koolshare/bin/websocketd)" "WebSocket 命令通道"
 	echo --------------------------------------------------------------------------------------------------------
 }
 
@@ -789,13 +790,10 @@ ECHO_IP6TABLES(){
 
 check_status() {
 	local LINUX_VER=$(uname -r|awk -F"." '{print $1$2}')
-	local pkg_name=$(get_pkg_name)
-	local pkg_arch=$(get_pkg_arch)
-	local pkg_type=$(get_pkg_type)
-	local pkg_exta=$(get_pkg_exta)
-	local pkg_vers=$(dbus get ss_basic_version_local)
-	local CURR_NAME=${pkg_name}_${pkg_arch}_${pkg_type}${pkg_exta}
-	local CURR_VERS=$(cat /koolshare/ss/version)
+	local CURR_VERS
+	CURR_VERS=$(/koolshare/bin/jq -r '.version // empty' /koolshare/ss/maintenance.json 2>/dev/null)
+	[ -n "${CURR_VERS}" ] || CURR_VERS=$(dbus get fss_ac3100_version)
+	[ -n "${CURR_VERS}" ] && CURR_VERS="v${CURR_VERS}" || CURR_VERS="未知版本"
 	local CURR_BAKD=$(echo ${ss_wan_black_domain} | base64_decode | sed '/^#/d' | sed 's/$/\n/' | sed '/^$/d' | wc -l)
 	local CURR_BAKI=$(echo ${ss_wan_black_ip} | base64_decode | sed '/^#/d' | sed 's/$/\n/' | sed '/^$/d' | wc -l)
 	local CURR_WHTD=$(echo ${ss_wan_white_domain} | base64_decode |sed '/^#/d'|sed 's/$/\n/' | sed '/^$/d' | wc -l)
@@ -812,11 +810,11 @@ check_status() {
 	echo "🟠 固件类型：$(GET_FW_TYPE)"
 	echo "🟠 固件版本：$(GET_FW_VER)"
 	echo "🟠 路由时间：$(TZ=UTC-8 date -R "+%Y-%m-%d %H:%M:%S")"
-	echo "🟠 插件版本：${CURR_NAME} ${CURR_VERS}"
+	echo "🟠 插件版本：Xray Web Tool ${CURR_VERS}（RT-AC3100 arm_lite）"
 	echo "🟠 代理模式：$(GET_MODE_NAME)"
 	echo "🟠 当前节点ID：${CURR_NODE_ID}"
 	echo "🟠 当前节点：$(GET_CURRENT_NODE_NAME)"
-	echo "🟠 节点类型：$(GET_CURRENT_NODE_TYPE)"
+	echo "🟠 节点协议：$(GET_CURRENT_NODE_TYPE)"
 	echo "🟠 程序核心：$(GET_PROXY_TOOL)"
 	echo "🟠 DNS方案：$(GET_DNS_PLAN_NAME)"
 	echo "🟠 DNS劫持：$(GET_SWITCH_NAME "${ss_basic_dns_hijack}")"
@@ -855,7 +853,7 @@ if [ "$1" = "ws" ];then
 fi
 
 if [ "$#" == "1" ];then
-	http_response $1
+	http_response "${REQUEST_ID}"
 fi
 
 PROC_STATUS_FILE="/tmp/upload/ss_proc_status.txt"
@@ -864,6 +862,10 @@ PROC_STATUS_TMP="${PROC_STATUS_FILE}.tmp.$$"
 rm -f "${PROC_STATUS_TMP}" "${PROC_STATUS_FILE}"
 true > "${PROC_STATUS_TMP}"
 exec >> "${PROC_STATUS_TMP}" 2>&1
+case "${REQUEST_ID}" in
+	""|*[!0-9]*) ;;
+	*) printf 'XWTSTATUS:%s\n' "${REQUEST_ID}" ;;
+esac
 
 if [ "${ss_basic_enable}" == "1" ]; then
 	check_status

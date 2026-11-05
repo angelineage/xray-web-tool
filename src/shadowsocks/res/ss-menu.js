@@ -192,7 +192,7 @@ function pop_help() {
         shadeClose:true, btn:['关闭窗口'], btnAlign:'c',
         content:'<div style="padding:28px;line-height:26px;background:#393D49;color:#fff">' +
             '<b>Xray Web Tool v' + version + '</b><br><br>' +
-            '由 angelineage 维护，基于 fancyss，专用于 ASUS RT-AC3100 arm_lite。<br>' +
+            '由 angelineage 维护，专用于 ASUS RT-AC3100 arm_lite。<br>' +
             '提供无广告界面、旧内核运行状态与国内外连接检测、Web 落地延迟、规则更新和实时日志。<br><br>' +
             '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/xray-web-tool">项目主页</a> · ' +
             '<a target="_blank" style="color:#e7bd16" href="https://github.com/angelineage/xray-web-tool/blob/main/CHANGELOG.md">更新日志</a> · ' +
@@ -461,7 +461,7 @@ function LoadingSSProgress(seconds) {
 	action = db_ss["ss_basic_action"];
 	document.getElementById("LoadingBar").style.visibility = "visible";
 	if (action == 0) {
-		document.getElementById("loading_block3").innerHTML = "科学上网功能关闭中 ..."
+		document.getElementById("loading_block3").innerHTML = "正在停止代理 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'><a href='https://github.com/angelineage/xray-web-tool/issues' target='_blank'></font>插件工作有问题？请到<em>GITHUB</em>提交issue...</font></li>");
 	} else if (action == 1) {
 		document.getElementById("loading_block3").innerHTML = "gfwlist模式启用中 ..."
@@ -474,7 +474,7 @@ function LoadingSSProgress(seconds) {
 		$("#loading_block2").html("<li><font color='#ffcc00'>此期间请勿访问屏蔽网址，以免污染DNS进入缓存</font></li><li><font color='#ffcc00'>为确保游戏工作，请确保你的SS账号支持UDP转发...</font></li><font color='#ffcc00'><li>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
 	} else if (action == 5) {
 		document.getElementById("loading_block3").innerHTML = "全局模式启用中 ..."
-		$("#loading_block2").html("<li><font color='#ffcc00'>此期间请勿访问屏蔽网址，以免污染DNS进入缓存</font></li><li><font color='#ffcc00'>此模式非科学上网方式，会影响国内网页速度...</font></li><li><font color='#ffcc00'>注意：全局模式并非VPN，只支持TCP流量转发...</font></li><li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
+		$("#loading_block2").html("<li><font color='#ffcc00'>此期间请勿访问屏蔽网址，以免污染DNS进入缓存</font></li><li><font color='#ffcc00'>此模式会影响国内网页访问速度...</font></li><li><font color='#ffcc00'>注意：全局模式并非VPN，只支持TCP流量转发...</font></li><li><font color='#ffcc00'>请等待日志显示完毕，并出现自动关闭按钮！</font></li><li><font color='#ffcc00'>在此期间请不要刷新本页面，不然可能导致问题！</font></li>");
 	} else if (action == 6) {
 		document.getElementById("loading_block3").innerHTML = "回国模式启用中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，正在应用配置...</font></li>");
@@ -482,17 +482,17 @@ function LoadingSSProgress(seconds) {
 		document.getElementById("loading_block3").innerHTML = "xray分流模式启用中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，正在生成节点分流配置 ...</font></li><li><font color='#ffcc00'>所有剩余流量会走兜底节点，命中规则的流量会按顺序切换到对应出站节点。</font></li>");
 	} else if (action == 7) {
-		document.getElementById("loading_block3").innerHTML = "科学上网插件升级 ..."
+		document.getElementById("loading_block3").innerHTML = "Xray Web Tool 更新 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，等待脚本运行完毕后再刷新！</font></li><li><font color='#ffcc00'>升级服务会自动检测最新版本并下载升级...</font></li>");
 	} else if (action == 8) {
-		document.getElementById("loading_block3").innerHTML = "科学上网规则更新 ..."
+		document.getElementById("loading_block3").innerHTML = "Xray Web Tool 规则更新 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，等待脚本运行完毕后再刷新！</font></li><li><font color='#ffcc00'>正在自动检测github上的更新...</font></li>");
 	} else if (action == 9) {
-		document.getElementById("loading_block3").innerHTML = "恢复科学上网配置 ..."
+		document.getElementById("loading_block3").innerHTML = "恢复Xray Web Tool 配置 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，配置恢复后需要重新提交！</font></li><li><font color='#ffcc00'>恢复配置中...</font></li><li><font color='#ffcc00'>旧版兼容SH备份恢复时间可能较长，请耐心等待日志输出。</font></li>");
 	} else if (action == 10) {
-		document.getElementById("loading_block3").innerHTML = "清空科学上网配置 ..."
-		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，正在清空科学上网配置...</font></li>");
+		document.getElementById("loading_block3").innerHTML = "清空Xray Web Tool 配置 ..."
+		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，正在清空Xray Web Tool 配置...</font></li>");
 	} else if (action == 11) {
 		document.getElementById("loading_block3").innerHTML = "插件打包中 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>打包时间较长，请稍等...</font></li><li><font color='#ffcc00'>打包的插件可以用于离线安装...</font></li>");
@@ -588,7 +588,7 @@ function openssHint(itemNum, flag) {
 		statusmenu += "<br /><li><font color='#00F'>未开启IPv6代理：</font>国外检测优先使用 <font color='#669900'>-x socks5://127.0.0.1:23456</font>，主要检查节点可用性和路由器本机DNS解析是否正常，这是当前IPv4场景的默认最佳实践。</li>"
 		statusmenu += "<br /><li><font color='#00F'>开启IPv6代理：</font>国外检测会拆分为【国外IPv4】和【国外IPv6】；两项都会直接走透明代理链路，不再使用 <font color='#669900'>-x socks5</font>，这样才能正确检测IPv6透明代理，同时把DNS、ipset、iptables、透明代理一起覆盖到。</li>"
 		statusmenu += "<br /><li><font color='#00F'>提示：</font>web 延迟测试地址使用插件内置检测网址；开启IPv6代理时，建议优先选择支持 IPv6 的国外检测网址。故障转移中的国外状态历史仍然只记录IPv4结果。</li>"
-		statusmenu += "<br /><li><font color='#00F'>边界说明：</font>这里的检测结果用于判断当前 fancyss 运行链路对测试域名的访问情况，不等同于节点本身可用性检测；节点可用性请结合 web 延迟测试、详细状态和终端实际访问一起判断。</li>"
+		statusmenu += "<br /><li><font color='#00F'>边界说明：</font>这里的检测结果用于判断当前 Xray Web Tool 运行链路对测试域名的访问情况，不等同于节点本身可用性检测；节点可用性请结合 web 延迟测试、详细状态和终端实际访问一起判断。</li>"
 		statusmenu += "<br /><br /><b><font color='#CC0066'>常见结果说明：</font></b>"
 		statusmenu += "<br />&nbsp;&nbsp;&nbsp;&nbsp;<font color='#00F'>1. 国外IPv4 √，国外IPv6 X：</font>节点大概率不支持IPv6，或者远端协议/服务器未提供IPv6能力，建议关闭IPv6代理。"
 		statusmenu += "<br />&nbsp;&nbsp;&nbsp;&nbsp;<font color='#00F'>2. 国内√，国外X：</font>优先检查节点配置、服务器可用性、国外DNS、程序运行状态，以及iptables/ipset是否正常。"
@@ -708,9 +708,9 @@ function openssHint(itemNum, flag) {
 		statusmenu += "<br /><br />需要清空电脑DNS缓存，才能立即看到效果。"
 		_caption = "IP/CIDR黑名单";
 	} else if (itemNum == 44) {
-		statusmenu = "shadowsocks规则更新包括了gfwlist模式中用到的<a href='https://github.com/hq450/fancyss/blob/master/rules/gfwlist.conf' target='_blank'><font color='#00F'><u>gfwlist</u></font></a>，在大陆白名单模式和游戏模式中用到的<a href='https://github.com/hq450/fancyss/blob/master/rules/chnroute.txt' target='_blank'><u><font color='#00F'>chnroute</font></u></a>和<a href='https://github.com/hq450/fancyss/blob/master/rules/chnlist.txt' target='_blank'><u><font color='#00F'>国内cdn名单</font></u></a>"
+		statusmenu = "Xray Web Tool 规则更新包括了gfwlist模式中用到的<a href='https://github.com/angelineage/xray-web-tool/blob/main/src/shadowsocks/ss/rules/gfwlist.gz' target='_blank'><font color='#00F'><u>gfwlist</u></font></a>，在大陆白名单模式和游戏模式中用到的<a href='https://github.com/angelineage/xray-web-tool/blob/main/src/shadowsocks/ss/rules/chnroute.txt' target='_blank'><u><font color='#00F'>chnroute</font></u></a>和<a href='https://github.com/angelineage/xray-web-tool/blob/main/src/shadowsocks/ss/rules/chnlist.gz' target='_blank'><u><font color='#00F'>国内cdn名单</font></u></a>"
 		statusmenu += "<br />建议更新时间在凌晨闲时进行，以避免更新时重启ss服务器造成网络访问问题。"
-		_caption = "shadowsocks规则自动更新";
+		_caption = "规则自动更新";
 	} else if (itemNum == 47) {
 		width = "750px";
 		statusmenu = "<br />此参数在客户端json配置文件的【outbound/outbounds → settings → vnext → users → security】位置"
@@ -743,7 +743,7 @@ function openssHint(itemNum, flag) {
 	} else if (itemNum == 104) {
 		width = "600px";
 		statusmenu = "<b>屏蔽BlockList域名解析：</b><br /><br />"
-		statusmenu += "fancyss提供了一份屏蔽域名解析名单：<a href='https://github.com/hq450/fancyss/blob/3.0/rules_ng/block_list.txt' target='_blank'><u><font color='#00F'>block list</font></u></a>，目前该list收录了一些Adobe激活相关的域名，开启后这些域名将不会得到解析，如果你使用正版adobe软件，请保持此处关闭。<br />"
+		statusmenu += "Xray Web Tool提供了一份屏蔽域名解析名单：<a href='https://github.com/angelineage/xray-web-tool/blob/main/src/shadowsocks/ss/rules/block_list.txt' target='_blank'><u><font color='#00F'>block list</font></u></a>，目前该list收录了一些Adobe激活相关的域名，开启后这些域名将不会得到解析，如果你使用正版adobe软件，请保持此处关闭。<br />"
 		_caption = "说明：";
 	} else if (itemNum == 105) {
 		width = "600px";
@@ -772,7 +772,6 @@ function openssHint(itemNum, flag) {
 		_caption = "[包括]关键词：";
 	} else if (itemNum == 112) {
 		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;一些机场需要特定的UA才能获得通用订阅，如果你使用默认订阅无法获得正确的而节点，可以尝试切换不同的UA来进行订阅！";
-		statusmenu += "<br /><br />&nbsp;&nbsp;&nbsp;&nbsp;fancyss 3.3.8及其以前版本使用的UA是：curl/wget。";
 		_caption = "说明";
 	} else if (itemNum == 113) {
 		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;一些机场的vmess/vless/trojan/hysteria2节点必须设置允许不安全才能工作，勾选这里后订阅的节点将默认启用允许不安全！";
@@ -849,7 +848,7 @@ function openssHint(itemNum, flag) {
 		_caption = "说明：";
 	} else if (itemNum == 138) {
 		width = "450px";
-		statusmenu = "fancyss运行需要网络畅通，如果本地网络不通，fancyss将无法正常运行<br /><br />";
+		statusmenu = "Xray Web Tool运行需要网络畅通，如果本地网络不通，Xray Web Tool将无法正常运行<br /><br />";
 		statusmenu += "如果能保证你的路由器本地网络稳定性，那么在插件开启时跳过网络可用性检测！";
 		_caption = "跳过网络可用性检测";
 	} else if (itemNum == 142) {
@@ -866,8 +865,8 @@ function openssHint(itemNum, flag) {
 		_caption = "跳过代理出口ip检测";
 	} else if (itemNum == 144) {
 		width = "450px";
-		statusmenu = "fancyss在开启的时候会运行代理程序、dns程序等相关程序，每个程序启动后会马上进行检测，以得知该程序是否已经在后台运行了.<br /><br />";
-		statusmenu += "如果勾选此选项，那么程序启动后将不会进行相应的检测，这可以节约一些fancyss的启动时间。";
+		statusmenu = "Xray Web Tool在开启的时候会运行代理程序、dns程序等相关程序，每个程序启动后会马上进行检测，以得知该程序是否已经在后台运行了.<br /><br />";
+		statusmenu += "如果勾选此选项，那么程序启动后将不会进行相应的检测，这可以节约一些Xray Web Tool的启动时间。";
 		_caption = "跳过程序启动检测";
 	} else if (itemNum == 145) {
 		width = "680px";
@@ -881,7 +880,7 @@ function openssHint(itemNum, flag) {
 		_caption = "说明";
 	} else if (itemNum == 146) {
 		width = "600px";
-		statusmenu =  "勾选此处后，fancyss将劫持ipv6流量，并将匹配的流量进行代理<br /><br />";
+		statusmenu =  "勾选此处后，Xray Web Tool将劫持ipv6流量，并将匹配的流量进行代理<br /><br />";
 		statusmenu += "1. 请确保你的代理节点支持ipv6，可以是纯ipv6，也可以是ipv4 + ipv6双栈。如果节点不支持ipv6，可能会导致海外网站无法访问。<br /><br />";
 		statusmenu += "2. 此处勾选后，DNS设定中，AAAA记录的过滤行为将会自动变更，将不再过滤海外域名的ipv6解析。<br /><br />";
 		_caption = "说明：";
@@ -891,7 +890,7 @@ function openssHint(itemNum, flag) {
 		statusmenu += "2. 插件默认国外检测网址为：<font color='#669900'>http://www.google.com/generate_204</font><br /><br />";
 		statusmenu += "3. 此处使用插件预置的国外测试网址，通过下拉框直接选择即可。<br /><br />";
 		statusmenu += "4. 如果开启了 IPv6 代理，请优先选择支持 IPv6 的国外检测网址，否则【国外IPv6】可能显示失败。<br /><br />";
-		statusmenu += "5. 这里的检测结果用于判断 fancyss 当前运行链路，不等同于节点本身可用性检测；节点是否可用请结合 web 延迟测试、详细状态和实际访问结果一起判断。<br /><br />";
+		statusmenu += "5. 这里的检测结果用于判断 Xray Web Tool 当前运行链路，不等同于节点本身可用性检测；节点是否可用请结合 web 延迟测试、详细状态和实际访问结果一起判断。<br /><br />";
 		statusmenu += "6. 部分中转机场可能会对特定测试网址做优化或劫持，导致不同地区节点测出相似延迟，此时建议更换测试网址。<br />";
 		_caption = "说明：";
 	} else if (itemNum == 148) {
@@ -900,7 +899,7 @@ function openssHint(itemNum, flag) {
 		statusmenu += "2. 插件默认国内检测网址为：<font color='#669900'>http://connectivitycheck.platform.hicloud.com/generate_204</font><br /><br />";
 		statusmenu += "3. 此处使用插件预置的国内测试网址，通过下拉框直接选择即可。<br /><br />";
 		statusmenu += "4. 建议选择国内可稳定访问、响应轻量、返回固定的检测网址，以减少误判。<br /><br />";
-		statusmenu += "5. 这里的检测结果用于判断 fancyss 当前国内直连链路，不等同于节点本身可用性检测。<br />";
+		statusmenu += "5. 这里的检测结果用于判断 Xray Web Tool 当前国内直连链路，不等同于节点本身可用性检测。<br />";
 		_caption = "说明：";
 	} else if (itemNum == 149) {
 		width = "600px";
@@ -934,12 +933,12 @@ function openssHint(itemNum, flag) {
 	} else if (itemNum == 153) {
 		width = "760px";
 		statusmenu = "<div style='padding-left:16px;padding-right:16px;line-height:1.6'>";
-		statusmenu += "<b>主DNS方案用于决定 fancyss 采用哪套 DNS 分流内核。</b><br /><br />";
+		statusmenu += "<b>主DNS方案用于决定 Xray Web Tool 采用哪套 DNS 分流内核。</b><br /><br />";
 		statusmenu += "<b><font color='#CC0066'>chinadns-ng：</font></b>链路更直接，中国DNS和可信DNS分别控制。<br />";
 		statusmenu += "优点：内存占用较小，通常在 5MB 左右；在指定 ISP DNS 的前提下，虽然不支持 IP 优选，但国内解析体验一般也不会比 smartdns 差很多。<br />";
 		statusmenu += "适用：更适合 ARMv7、小内存机型，或希望以更低资源占用获得稳定 DNS 分流体验的场景。<br /><br />";
 		statusmenu += "<b><font color='#CC0066'>smartdns：</font></b>更擅长多上游并发、缓存、测速和双栈优选，综合体验更偏向“自动择优”。<br />";
-		statusmenu += "优点：在 fancyss 上可以实现国内解析优选 IP，但通常需要为 chn 组指定多个 DNS 上游。<br />";
+		statusmenu += "优点：在 Xray Web Tool 上可以实现国内解析优选 IP，但通常需要为 chn 组指定多个 DNS 上游。<br />";
 		statusmenu += "缺点：内存占用较高，通常在 40MB 左右；不能对经过代理的域名解析做 IP 优选。<br /><br />";
 		statusmenu += "<font color='#00F'>建议：</font>ARMv7、小内存机型优先选 <b>chinadns-ng</b>；ARMv8、大内存机型，且追求更极致国内 DNS 体验时选 <b>smartdns</b>。";
 		statusmenu += "</div>";

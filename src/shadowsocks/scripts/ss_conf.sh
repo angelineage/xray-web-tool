@@ -137,7 +137,7 @@ clear_ss_config_storage(){
 	node_count=$(fss_get_node_count)
 	[ -z "${node_count}" ] && node_count=0
 
-	echo_date "开始清理科学上网配置..."
+	echo_date "开始清理Xray Web Tool 配置..."
 	echo_date "检测到可清理配置 ${conf_count} 项，节点 ${node_count} 个。"
 	for conf in ${confs}
 	do
@@ -149,8 +149,8 @@ clear_ss_config_storage(){
 
 remove_now(){
 	# 1. 关闭插件
-	echo_date "开始清空科学上网配置..."
-	echo_date "清空配置前先关闭科学上网..."
+	echo_date "开始清空Xray Web Tool 配置..."
+	echo_date "清空配置前先停止代理..."
 	dbus set ss_basic_enable="0"
 	sh /koolshare/ss/ssconfig.sh stop 2>&1 | grep -v "Terminated"
 
@@ -217,7 +217,7 @@ remove_silent(){
 }
 
 restore_sh(){
-	echo_date "检测到科学上网备份文件..."
+	echo_date "检测到Xray Web Tool 备份文件..."
 	echo_date "开始恢复配置..."
 	echo_date "兼容SH备份恢复耗时可能较长，请耐心等待..."
 	chmod +x /tmp/upload/ssconf_backup.sh
@@ -242,7 +242,7 @@ restore_sh(){
 }
 
 restore_json(){
-	echo_date "检测到科学上网JSON备份文件..."
+	echo_date "检测到Xray Web Tool JSON 备份文件..."
 	echo_date "开始恢复JSON备份..."
 	echo_date "JSON备份恢复期间可能耗时较长，请耐心等待..."
 	if fss_restore_native_backup_v2 /tmp/upload/ssconf_backup.json; then

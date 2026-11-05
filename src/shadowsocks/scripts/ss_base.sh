@@ -714,7 +714,7 @@ close_in_five() {
 		dbus set ss_basic_enable="0"
 		ss_basic_status=1
 		disable_ss >/dev/null
-		echo_date "科学上网插件已完全关闭！！"
+		echo_date "Xray Web Tool已完全关闭！！"
 	else
 		# 关闭插件，但是开关保留开启，状态检测保持开启
 		ss_basic_status=1
@@ -728,9 +728,9 @@ close_in_five() {
 			echo "=========================================== start/restart ==========================================" >>/tmp/upload/ssc_status.txt
 			run start-stop-daemon -S -q -b -x /koolshare/scripts/ss_status_main.sh
 		fi
-		echo_date "科学上网插件已关闭！！"
+		echo_date "Xray Web Tool已关闭！！"
 	fi
-	echo_date "======================= 梅林固件 - 【科学上网】 ========================"
+	echo_date "======================= 梅林固件 - 【Xray Web Tool】 ========================"
 	unset_lock
 	exit
 }

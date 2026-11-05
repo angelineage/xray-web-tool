@@ -683,7 +683,7 @@ body[skin="TS"] select option {
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
 <script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
 <script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261105-7"></script>
-<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=protocols-20261105"></script>
+<script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=branding-20261105"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/softcenter.js"></script>
@@ -4598,7 +4598,7 @@ function prepare_migration_notice_downloads(cb) {
 function show_node_migration_notice() {
 	var tip = [
 		"检测到本次版本已完成节点数据结构升级：",
-		"1. 老版本 fancyss 无法直接识别新的节点存储结构；",
+		"1. 旧版插件无法直接识别新的节点存储结构；",
 		"2. 如果未来需要回退旧版本，请先下载“旧版兼容备份”；",
 		"3. 关闭此窗口后，可到【附加功能】 - 【备份/恢复】继续导出配置；",
 		"4. 建议回退旧版本前，先在当前新版本导出一次最新配置。"
@@ -5164,7 +5164,7 @@ function render_sslinks_login_result(payload) {
 }
 function render_sslinks_login_form() {
 	var html = "";
-	html += '<div class="sslinks-login-note">ssLinks用户通过此处登录将订阅节点导入到fancyss。</div>';
+	html += '<div class="sslinks-login-note">ssLinks用户通过此处登录将订阅节点导入到 Xray Web Tool。</div>';
 	html += '<div class="sslinks-login-row"><div class="sslinks-login-label">账号</div><div class="sslinks-login-control"><input type="text" id="sslinks_login_email" autocomplete="username" placeholder="请输入 ssLinks 登录邮箱"></div></div>';
 	html += '<div class="sslinks-login-row"><div class="sslinks-login-label">密码</div><div class="sslinks-login-control"><input type="password" id="sslinks_login_password" autocomplete="current-password" placeholder="请输入 ssLinks 登录密码"></div></div>';
 	html += '<div class="sslinks-login-actions"><button type="button" id="sslinks_login_submit" class="sslinks-login-btn" onclick="submit_sslinks_login()">登录</button></div>';
@@ -5907,7 +5907,7 @@ function open_subscription_profile_editor(profileId) {
 	html += '<div class="shunt-editor-row"><div class="shunt-editor-label">节点模式</div><div class="shunt-editor-control"><select id="submgr_profile_subscribe_mode">' + render_subscription_select_options(option_modes || [["2", "大陆白名单模式"]], state.subscribe_mode) + '</select></div></div>';
 	html += '<div class="shunt-editor-row"><div class="shunt-editor-label">下载策略</div><div class="shunt-editor-control"><select id="submgr_profile_download_policy">' + render_subscription_select_options([["auto", "自动判断"], ["proxy", "走代理"], ["direct", "不走代理"]], state.download_policy) + '</select></div></div>';
 	html += '<div class="shunt-editor-row"><div class="shunt-editor-label">UA 模式</div><div class="shunt-editor-control"><select id="submgr_profile_ua_mode" onchange="toggle_subscription_profile_ua_fields()">' + render_subscription_select_options([["fixed", "固定预设"], ["custom", "自定义字符串"]], state.ua_mode) + '</select></div></div>';
-	html += '<div class="shunt-editor-row" id="submgr_profile_ua_preset_row"><div class="shunt-editor-label">UA 预设</div><div class="shunt-editor-control"><select id="submgr_profile_ua_preset">' + render_subscription_select_options([["default", "fancyss 默认"], ["curl", "curl/wget"], ["v2rayn", "V2rayN"], ["v2rayng", "V2rayNG"], ["shadowrocket", "Shadowrocket"]], state.ua_preset) + '</select></div></div>';
+	html += '<div class="shunt-editor-row" id="submgr_profile_ua_preset_row"><div class="shunt-editor-label">UA 预设</div><div class="shunt-editor-control"><select id="submgr_profile_ua_preset">' + render_subscription_select_options([["default", "Xray Web Tool 默认"], ["curl", "curl/wget"], ["v2rayn", "V2rayN"], ["v2rayng", "V2rayNG"], ["shadowrocket", "Shadowrocket"]], state.ua_preset) + '</select></div></div>';
 	html += '<div class="shunt-editor-row" id="submgr_profile_ua_custom_row"><div class="shunt-editor-label">UA 自定义</div><div class="shunt-editor-control"><input type="text" id="submgr_profile_ua_custom" value="' + htmlEscape(state.ua_custom) + '" placeholder="自定义 User-Agent 字符串"></div></div>';
 	html += '<div class="shunt-editor-row"><div class="shunt-editor-label">排除关键词</div><div class="shunt-editor-control"><input type="text" id="submgr_profile_exclude" value="' + htmlEscape(state.exclude) + '" placeholder="多个关键词用英文逗号分隔"></div></div>';
 	html += '<div class="shunt-editor-row"><div class="shunt-editor-label">包含关键词</div><div class="shunt-editor-control"><input type="text" id="submgr_profile_include" value="' + htmlEscape(state.include) + '" placeholder="多个关键词用英文逗号分隔"></div></div>';
@@ -8253,6 +8253,8 @@ function getNodeCtx() {
 	ctx.hy2_ai_off = !getFieldChecked("ss_node_table_hy2_ai");
 	ctx.hy2_ai_on = getFieldChecked("ss_node_table_hy2_ai");
 	ctx.hy2_obfs_on = getFieldValue("ss_node_table_hy2_obfs") != "0";
+	ctx.basic_server_on = ctx.ss_on || ctx.v_json_off || ctx.x_json_off || ctx.trojan_on;
+	ctx.basic_pass_on = ctx.ss_on;
 	ctx.ss_obfs_allowed = ctx.ss_on && getFieldValue("ss_node_table_mode") != "3";
 	ctx.ss_obfs_host_on = ctx.ss_obfs_allowed && getFieldValue("ss_node_table_ss_obfs") != "0";
 	return ctx;
@@ -12947,7 +12949,7 @@ function handle_ss_status_heartbeat(showRefreshPrompt) {
 	dbus_post["ss_heart_beat"] = "0";
 	push_data("dummy_script.sh", "", dbus_post, "2");
 	if (showRefreshPrompt) {
-		layer.confirm('<li>科学上网插件页面需要刷新！</li><br /><li>由于故障转移功能已经在后台切换了节点，为了保证页面显示正确配置！需要刷新此页面！</li><br /><li>确定现在刷新吗？</li>', {
+		layer.confirm('<li>Xray Web Tool 页面需要刷新！</li><br /><li>由于故障转移功能已经在后台切换了节点，为了保证页面显示正确配置！需要刷新此页面！</li><br /><li>确定现在刷新吗？</li>', {
 			time: 3e4,
 			shade: 0.8
 		}, function(index) {
@@ -13330,14 +13332,14 @@ function dns_test(s) {
 		$("#log_dig").show();
 		$("#log_resv").hide();
 		dns_log["ss_basic_logname"] = "dns_cdn";
-		var note1 = '1. 以下DNS解析测试的域名来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的cdn-testlist.txt，并经过fancyss项目整理。';
+		var note1 = '1. 以下DNS解析测试的域名来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的cdn-testlist.txt，由本项目随包提供。';
 		var note2 = '2. 解析结果和速度可能受节点、DNS方案、上游DNS缓存等因素影响，本测试也无法判断解析结果正确性！所以测试结果仅供参考！';
 	}
 	else if(s == 2){
 		$("#log_dig").show();
 		$("#log_resv").hide();
 		dns_log["ss_basic_logname"] = "dns_cdn_apple";
-		var note1 = '1. Apple China的域名清单来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的apple.china.conf，并经过fancyss项目整理。';
+		var note1 = '1. Apple China的域名清单来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的apple.china.conf，由本项目随包提供。';
 		var note2 = '2. 理想情况下，Apple China域名清单应该尽可能多的解析到大陆IP地址！';
 		var note3 = '3. 解析结果和速度可能受节点、DNS方案、上游DNS缓存等因素影响，本测试也无法判断解析结果正确性！所以测试结果仅供参考！';
 	}
@@ -13345,7 +13347,7 @@ function dns_test(s) {
 		$("#log_dig").show();
 		$("#log_resv").hide();
 		dns_log["ss_basic_logname"] = "dns_cdn_google";
-		var note1 = '1. Google China的域名清单来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的google.china.conf，并经过fancyss项目整理。';
+		var note1 = '1. Google China的域名清单来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的google.china.conf，由本项目随包提供。';
 		var note2 = '2. 理想情况下，Google China域名清单应该尽可能多的解析到大陆IP地址！';
 		var note3 = '3. 解析结果和速度可能受节点、DNS方案、上游DNS缓存等因素影响，本测试也无法判断解析结果正确性！所以测试结果仅供参考！';
 	}
@@ -13353,7 +13355,7 @@ function dns_test(s) {
 		$("#log_dig").show();
 		$("#log_resv").hide();
 		dns_log["ss_basic_logname"] = "dns_gfwlist";
-		var note1 = '1. gfwlist的域名清单来自：<a href="https://github.com/hq450/fancyss/blob/3.0/rules_ng/gfwlist.gz" target="_blank"><em><u>https://github.com/hq450/fancyss/blob/3.0/rules_ng/gfwlist.gz</u></em></a>，收录了常见的被gfw屏蔽的域名。';
+		var note1 = '1. gfwlist的域名清单来自：<a href="https://github.com/angelineage/xray-web-tool/blob/main/src/shadowsocks/ss/rules/gfwlist.gz" target="_blank"><em><u>https://github.com/angelineage/xray-web-tool/blob/main/src/shadowsocks/ss/rules/gfwlist.gz</u></em></a>，收录了常见的被gfw屏蔽的域名。';
 		var note2 = '2. 由于gfwlist清单较长，将每次随机选取100个域名进行测试！理想情况下，解析结果应该全部是海外IP地址，没有大陆IP地址！';
 		var note3 = '3. 解析结果和速度可能受节点、DNS方案、上游DNS缓存等因素影响，本测试也无法判断解析结果正确性！所以测试结果仅供参考！';
 	}
@@ -13361,13 +13363,13 @@ function dns_test(s) {
 		$("#log_dig").show();
 		$("#log_resv").hide();
 		dns_log["ss_basic_logname"] = "dns_cdn_china";
-		var note1 = '1. chnlist的域名清单来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的accelerated-domains.china.conf，并经过fancyss项目整理。';
+		var note1 = '1. chnlist的域名清单来自：<a href="https://github.com/felixonmars/dnsmasq-china-list" target="_blank"><em><u>https://github.com/felixonmars/dnsmasq-china-list</u></em></a> 的accelerated-domains.china.conf，由本项目随包提供。';
 		var note2 = '2. 由于chnlist清单较长，将每次随机选取100个域名进行测试！由于chnlist收录的域名条件位解析结果或者NS服务器在国内，所以很多域名解析到国外是正常的！';
 	}
 	else if(s == 6){
 		$("#log_dig").hide();
 		$("#log_resv").show();
-		var note1 = '1. 本测试需要用到dig程序，因程序体积较大，fancyss默认不包含此程序，点击测试的时候会自动尝试下载该程序。';
+		var note1 = '1. 本测试需要用到dig程序，因程序体积较大，Xray Web Tool 默认不包含此程序，点击测试的时候会自动尝试下载该程序。';
 		var note2 = '1. 本测试仅针对DNS解析最终端，即本机dnsmasq 53端口的DNS服务器测试，每次测试前会自动清空dnsmasq缓存，以避免缓存影响。';
 		var note3 = '2. 用dig进行测试可以方便的知道在本插件选定的DNS方案下，域名解析的ipv4结果';
 		dbus_commit["ss_basic_dig_opt"] = E("ss_basic_dig_opt").value
@@ -14810,48 +14812,36 @@ function get_proc_status_ws() {
 function get_proc_status_httpd() {
 	set_proc_status_text("请稍后，正在获取状态中...");
 	$("#detail_status").fadeIn(500);
-	var id = parseInt(Math.random() * 100000000);
-	var postData = {"id": id, "method": "ss_proc_status.sh", "params":[], "fields": ""};
-	setTimeout(function() {
-		write_proc_status(true);
-	}, 300);
+	var id = Math.floor(Math.random() * 100000000);
 	$.ajax({
 		type: "POST",
 		cache: false,
 		url: "/_api/",
 		timeout: 3000,
-		data: JSON.stringify(postData),
-		dataType: "json",
-		success: function(response) {
-			if(response.result == id){
-				write_proc_status(false);
-			}
-		},
-		error: function() {
-			write_proc_status(false);
-		}
+		data: JSON.stringify({id: id, method: "ss_proc_status.sh", params: [], fields: ""}),
+		dataType: "json"
 	});
+	write_proc_status(id);
 }
-function write_proc_status(reset) {
+function write_proc_status(id) {
+	var marker = "XWTSTATUS:" + id + "\n";
+	function wait_for_status(state) {
+		if (state.attempt < 80) return {done: false, delay: 750};
+		set_proc_status_text("未能获取本次状态，请关闭后重试。");
+		return {done: true};
+	}
 	poll_text_file({
 		key: "proc_status",
-		reset: reset === true,
+		reset: true,
 		url: '/_temp/ss_proc_status.txt',
 		dataType: 'text',
 		onSuccess: function(res, state) {
 			var text = String(res || "");
-			if (!text.trim() && state.attempt < 40) {
-				return {done: false, delay: 250};
-			}
-			set_proc_status_text(text);
+			if (text.indexOf(marker) !== 0) return wait_for_status(state);
+			set_proc_status_text(text.slice(marker.length));
 			return {done: true};
 		},
-		onError: function(xhr, state) {
-			if (state.attempt < 40) {
-				return {done: false, delay: 250};
-			}
-			return {done: true};
-		}
+		onError: function(xhr, state) { return wait_for_status(state); }
 	});
 }
 function get_online_nodes(action) {
@@ -14899,7 +14889,7 @@ function save_online_nodes(action) {
 function xray_binary_update(){
 	var dbus_post = {};
 	db_ss["ss_basic_action"] = "15";
-	note = "<li style='line-height:32px'>xray二进制来自于fancyss项目编译压缩：<a style='color:#22ab39;' href='https://github.com/hq450/fancyss/tree/3.0/binaries/xray' target='_blank'>https://github.com/hq450/fancyss/tree/3.0/binaries/xray</a></li>";
+	note = "<li style='line-height:32px'>Xray 核心构建来源：<a style='color:#22ab39;' href='https://github.com/hq450/fancyss/tree/3.0/binaries/xray' target='_blank'>https://github.com/hq450/fancyss/tree/3.0/binaries/xray</a></li>";
 	note += "<li style='line-height:32px'>你也可以自行下载Xray-core官方<a style='color:#22ab39;' href='https://github.com/XTLS/Xray-core/releases' target='_blank'>release</a>的二进制文件，替换路由器内/koolshare/bin/xray文件</li>";
 	note += "<li style='line-height:32px'>因二进制更新/升级导致代理无法工作的，请检查你的配置是否兼容新版本程序！</li>";
 	layer.open({
@@ -15086,7 +15076,7 @@ function toggleKeyMask(o, show){
 												</ul>
 											</div>
 											<div id="detail_status" class="content_status" style="box-shadow: 3px 3px 10px #000;margin-top: -20px;">
-												<div class="user_title">Xray Web Tool状态检测</div>
+												<div class="user_title">Xray Web Tool 状态检测</div>
 												<div style="margin-left:15px"><i>&nbsp;&nbsp;详细状态检测可以让你了解插件相关二进制和iptables的运行状况，用以排除一些使用中的问题。</i></div>
 												<div style="margin: 10px 10px 10px 10px;width:98%;text-align:center;overflow:hidden">
 													<textarea cols="63" rows="36" wrap="off" id="proc_status" style="line-height:1.45;width:98%;padding-left:13px;padding-right:33px;border:0px solid #222;font-family:'Lucida Console'; font-size:11px;background: transparent;color:#FFFFFF;outline: none;overflow-x:hidden;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
@@ -15142,7 +15132,7 @@ function toggleKeyMask(o, show){
 													</tr>
 													</thead>
 													<tr>
-														<th id="ss_switch">科学上网开关</th>
+														<th id="ss_switch">代理开关</th>
 														<td colspan="2">
 															<div class="switch_field" style="display:table-cell;float: left;">
 																<label for="ss_basic_enable">
@@ -15890,7 +15880,7 @@ function toggleKeyMask(o, show){
 														$('#table_rules').forms([
 															{ title: 'gfwlist 域名数量（被墙域名）', multi: [
 																{ suffix: '<em>'+ gfwl +'</em>&nbsp;条，版本：' },
-																{ suffix: '<a href="https://github.com/hq450/fancyss/blob/3.0/rules_ng/gfwlist.gz" target="_blank">' },
+																{ suffix: '<a href="https://github.com/angelineage/xray-web-tool/blob/main/src/shadowsocks/ss/rules/gfwlist.gz" target="_blank">' },
 																{ suffix: '<i><% nvram_get("update_gfwlist"); %></i></a>' },
 															]},
 															{ title: 'chnlist 域名数量（大陆域名）', multi: [
@@ -15958,7 +15948,7 @@ function toggleKeyMask(o, show){
 															{ title: '订阅逐节点日志', id:'ss_basic_sub_node_log', hint:'117', type:'checkbox', value:false},
 															{ title: '保留订阅信息节点', id:'ss_basic_sub_keep_info_node', hint:'118', type:'checkbox', value:false},
 															{ title: '下载订阅时走代理网络', id:'ss_basic_online_links_proxy', type:'select', style:'width:auto', options:[["0", "自动判断"], ["1", "走代理"], ["2", "不走代理"]], value:'0'},
-															{ title: '自定义UserAgent', id:'ss_basic_online_ua', type:'select', style:'width:auto', hint:'112', options:[["0", "fancyss默认（≥3.3.9）"], ["1", "curl/wget（≤3.3.8）"], ["2", "V2rayN"], ["3", "V2rayNG"], ["4", "Shadowrocket"]], value:'0'},
+															{ title: '自定义UserAgent', id:'ss_basic_online_ua', type:'select', style:'width:auto', hint:'112', options:[["0", "Xray Web Tool 默认"], ["1", "curl/wget"], ["2", "V2rayN"], ["3", "V2rayNG"], ["4", "Shadowrocket"]], value:'0'},
 															{ title: '订阅计划任务', multi: [
 																{ id:'ss_basic_node_update', type:'select', style:'width:auto', func:'u', options:[["0", "禁用"], ["1", "开启"]], value:'0'},
 																{ id:'ss_basic_node_update_day', type:'select', style:'width:auto', options:option_noded, value:'6'},

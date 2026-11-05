@@ -105,3 +105,25 @@ vm.runInContext(html.slice(html.indexOf('function get_node_display_type_label(')
 for(const [node,label] of [[{type:'0'},'SS'],[{type:'3'},'VMess'],[{type:'4'},'VLESS'],[{type:'4',xray_prot:'vmess'},'VMess'],[{type:'5'},'Trojan'],[{type:'8'},'Hysteria2']])assert.equal(protocolContext.get_node_display_type_label(node),label);
 
 assert.doesNotMatch(fs.readFileSync(root+'/scripts/ss_webtest.sh','utf8'),/test_07_sr|WT_SSR_THREADS|wt-rss-local/);
+
+const formCtx={save_flag:'',getFieldChecked:()=>false,getFieldValue:()=>'',should_show_xray_flow:()=>false,get_node_table_xray_protocol:()=> 'vless'};
+vm.createContext(formCtx);vm.runInContext(html.slice(html.indexOf('function getNodeCtx('),html.indexOf('function applyNodeVisibility(')),formCtx);
+for(const [flag,server,pass] of [['shadowsocks',true,true],['v2ray',true,false],['xray',true,false],['trojan',true,false],['hysteria2',false,false]]) {
+ formCtx.save_flag=flag;const state=formCtx.getNodeCtx();assert.equal(state.basic_server_on,server,flag);assert.equal(state.basic_pass_on,pass,flag);
+}
+
+const installSource=fs.readFileSync(root+'/install.sh','utf8');
+const detailSource=fs.readFileSync(root+'/scripts/ss_proc_status.sh','utf8');
+assert.doesNotMatch(installSource,/fancyss_arm_lite|hq450\/fancyss_history_package|echo_date.*\$\{PLVER\}/);
+assert.match(installSource,/MAINT_VERSION=.*\/ss\/maintenance\.json/);
+assert.match(detailSource,/CURR_VERS=.*\/ss\/maintenance\.json/);
+assert.doesNotMatch(detailSource,/cat \/koolshare\/ss\/version/);
+
+let statusPoll,shownStatus='';const detailCtx={poll_text_file:o=>{statusPoll=o;},set_proc_status_text:s=>{shownStatus=s;}};
+vm.createContext(detailCtx);vm.runInContext(html.slice(html.indexOf('function write_proc_status('),html.indexOf('function get_online_nodes(action)')),detailCtx);
+detailCtx.write_proc_status(123);
+assert.equal(statusPoll.onSuccess('old report',{attempt:1}).done,false);
+assert.equal(statusPoll.onSuccess('XWTSTATUS:122\nother report',{attempt:2}).done,false);
+assert.equal(shownStatus,'');
+assert.equal(statusPoll.onSuccess('XWTSTATUS:123\ncurrent report',{attempt:3}).done,true);
+assert.equal(shownStatus,'current report');

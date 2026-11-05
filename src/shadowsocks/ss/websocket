@@ -14,7 +14,7 @@ cmd() {
 		ss_node_subscribe.sh|ss_online_update.sh)
 			echo "订阅脚本缺失：${bin}"
 			echo "可能原因：固件安全组件或其它程序删除了该脚本。"
-			echo "建议处理：重新安装 fancyss，并尽量升级到较新的无 ASD 固件。"
+			echo "建议处理：重新安装 Xray Web Tool，并尽量升级到较新的无 ASD 固件。"
 			return 127
 			;;
 		esac

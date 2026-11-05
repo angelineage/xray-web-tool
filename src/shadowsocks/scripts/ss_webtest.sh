@@ -4396,7 +4396,7 @@ follow_webtest_single_ws)
 	# webtest foreign url changed
 	wt_http_response $1
 	if [ "${ss_failover_enable}" == "1" ];then
-		echo "${LOGTIME1} fancyss：切换国外web延迟检测地址为：${ss_basic_furl}" >>/tmp/upload/ssf_status.txt
+		echo "${LOGTIME1} Xray Web Tool：切换国外web延迟检测地址为：${ss_basic_furl}" >>/tmp/upload/ssf_status.txt
 	fi
 	set_latency_job
 	;;
@@ -4404,7 +4404,7 @@ follow_webtest_single_ws)
 	# webtest china url changed
 	wt_http_response $1
 	if [ "${ss_failover_enable}" == "1" ];then
-		echo "${LOGTIME1} fancyss：切换国内web延迟检测地址为：${ss_basic_curl}" >>/tmp/upload/ssc_status.txt
+		echo "${LOGTIME1} Xray Web Tool：切换国内web延迟检测地址为：${ss_basic_curl}" >>/tmp/upload/ssc_status.txt
 	fi
 	set_latency_job
 	;;
@@ -4412,8 +4412,8 @@ follow_webtest_single_ws)
 	# webtest foreign + china url changed
 	wt_http_response $1
 	if [ "${ss_failover_enable}" == "1" ];then
-		echo "${LOGTIME1} fancyss：切换国外web延迟检测地址为：${ss_basic_furl}" >>/tmp/upload/ssf_status.txt
-		echo "${LOGTIME1} fancyss：切换国内web延迟检测地址为：${ss_basic_curl}" >>/tmp/upload/ssc_status.txt
+		echo "${LOGTIME1} Xray Web Tool：切换国外web延迟检测地址为：${ss_basic_furl}" >>/tmp/upload/ssf_status.txt
+		echo "${LOGTIME1} Xray Web Tool：切换国内web延迟检测地址为：${ss_basic_curl}" >>/tmp/upload/ssc_status.txt
 	fi
 	set_latency_job
 	;;

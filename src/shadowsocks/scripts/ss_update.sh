@@ -28,7 +28,7 @@ mkdir -p /tmp/upload
 : > /tmp/upload/ss_log.txt
 http_response "$REQUEST_ID" >/dev/null 2>&1
 {
-    echo '正在检查个人仓库最新正式版本...'
+    echo '正在检查 Xray Web Tool 最新正式版本...'
     if ! check_release; then echo '检查更新失败，请稍后重试。'; echo XU6J03M6; exit 1; fi
     CURRENT=$($JQ -r '.version' /koolshare/ss/maintenance.json)
     if [ "$TAG" = "v${CURRENT}" ]; then echo "当前已是最新版本 ${CURRENT}"; echo XU6J03M6; exit 0; fi
@@ -37,7 +37,6 @@ http_response "$REQUEST_ID" >/dev/null 2>&1
     latest=$(printf '%s\n%s\n' "$CURRENT" "$NEW" | sort -t . -k1,1n -k2,2n -k3,3n | tail -1)
     [ "$latest" = "$NEW" ] || { echo '当前版本高于仓库版本，无需更新。'; echo XU6J03M6; exit 0; }
     NAME="xray_web_tool_arm_lite_ac3100_${NEW}.tar.gz"
-    if ! $JQ -e --arg n "$NAME" 'any(.assets[]; .name==$n)' "${WORK}/release.json" >/dev/null; then NAME="fancyss_arm_lite_ac3100_${NEW}.tar.gz"; fi
     URL=$($JQ -r --arg n "$NAME" '.assets[]|select(.name==$n)|.browser_download_url' "${WORK}/release.json")
     SUMURL=$($JQ -r '.assets[]|select(.name=="SHA256SUMS.txt")|.browser_download_url' "${WORK}/release.json")
     case "$URL" in https://github.com/angelineage/xray-web-tool/releases/download/*) ;; *) echo '发布包地址无效'; echo XU6J03M6; exit 1 ;; esac
@@ -54,7 +53,7 @@ http_response "$REQUEST_ID" >/dev/null 2>&1
     tar -xzf "${WORK}/package.tar.gz" -C "${WORK}/extract" || exit 1
     META="${WORK}/extract/shadowsocks/ss/maintenance.json"
     $JQ -e --arg v "$NEW" '.version==$v and .target.model=="RT-AC3100" and .target.arch=="arm" and .target.edition=="lite"' "$META" >/dev/null || { echo '安装包版本或机型不匹配'; echo XU6J03M6; exit 1; }
-    echo "正在安装 ${TAG}..."
+    echo "正在安装 Xray Web Tool ${TAG}..."
     if [ -e /tmp/shadowsocks ]; then echo '另一个安装任务尚未完成，请稍后重试。'; echo XU6J03M6; exit 1; fi
     mv "${WORK}/extract/shadowsocks" /tmp/shadowsocks || exit 1
     sh /tmp/shadowsocks/install.sh

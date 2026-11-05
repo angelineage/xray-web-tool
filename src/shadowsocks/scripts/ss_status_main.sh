@@ -228,29 +228,29 @@ failover_action(){
 	local current_id=$(fss_get_current_node_id)
 	local current_name=$(get_node_name_by_id "${current_id}")
 	if [ "$ss_failover_s4_1" == "0" ];then
-		[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 fancyss：检测到连续$ss_failover_s1个状态故障，关闭插件！"
-		[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，关闭插件！"
-		[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，关闭插件！"
+		[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到连续$ss_failover_s1个状态故障，关闭插件！"
+		[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，关闭插件！"
+		[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，关闭插件！"
 		dbus set ss_basic_enable="0"
 		# 关闭
 		dbus set ss_heart_beat="1"
 		run start-stop-daemon -S -q -b -x /koolshare/ss/ssconfig.sh -- stop
 	elif [ "$ss_failover_s4_1" == "1" ];then
-		[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 fancyss：检测到连续$ss_failover_s1个状态故障，重启插件！"
-		[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，重启插件！"
-		[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，重启插件！"
+		[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到连续$ss_failover_s1个状态故障，重启插件！"
+		[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，重启插件！"
+		[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，重启插件！"
 		# 重启
 		run start-stop-daemon -S -q -b -x /koolshare/ss/ssconfig.sh -- restart
 	elif [ "$ss_failover_s4_1" == "2" ];then
 		if [ "$ss_failover_s4_2" == "3" ];then
 			if [ ! -f "/tmp/upload/webtest_bakcup.txt" ];then
-				LOGM "$LOGTIME1 fancyss：没有找到web延迟测试结果，采取切换到下个节点的策略..."
+				LOGM "$LOGTIME1 Xray Web Tool：没有找到web延迟测试结果，采取切换到下个节点的策略..."
 				ss_failover_s4_2="2"
 			fi
 			local CURR_NODE=${current_id}
 			local FAST_NODE=$(pick_fastest_webtest_node "${CURR_NODE}" "/tmp/upload/webtest_bakcup.txt")
 			if [ -z "${FAST_NODE}" ];then
-				LOGM "$LOGTIME1 fancyss：没有找到web延迟测试最低的节点，采取切换到下个节点的策略..."
+				LOGM "$LOGTIME1 Xray Web Tool：没有找到web延迟测试最低的节点，采取切换到下个节点的策略..."
 				ss_failover_s4_2="2"
 			fi
 		fi
@@ -258,9 +258,9 @@ failover_action(){
 		if [ "$ss_failover_s4_2" == "1" ];then
 			local backup_id=$(fss_get_failover_node_id)
 			local backup_name=$(get_node_name_by_id "${backup_id}")
-			[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 fancyss：检测到连续$ss_failover_s1个状态故障，切换到备用节点：[${backup_name}]！同时把主节点降级为备用节点！"
-			[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，切换到备用节点：[${backup_name}]！同时把主节点降级为备用节点！"
-			[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，切换到备用节点：[${backup_name}]！同时把主节点降级为备用节点！"
+			[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到连续$ss_failover_s1个状态故障，切换到备用节点：[${backup_name}]！同时把主节点降级为备用节点！"
+			[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，切换到备用节点：[${backup_name}]！同时把主节点降级为备用节点！"
+			[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，切换到备用节点：[${backup_name}]！同时把主节点降级为备用节点！"
 			# 切换
 			fss_set_current_node_id "${backup_id}"
 			# 降级
@@ -272,11 +272,11 @@ failover_action(){
 			NEXT_NODE=$(fss_get_next_node_id_in_order "${current_id}")
 			local NEXT_NAME=$(get_node_name_by_id "${NEXT_NODE}")
 			local NODE_COUNT=$(fss_get_node_count)
-			[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 fancyss：检测到连续$ss_failover_s1个状态故障，切换到节点列表的下个节点：[${NEXT_NAME}]！"
-			[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，切换到节点列表的下个节点：[${NEXT_NAME}]！"
-			[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 fancyss：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，切换到节点列表的下个节点：[${NEXT_NAME}]！"
+			[ "$FLAG" == "1" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到连续$ss_failover_s1个状态故障，切换到节点列表的下个节点：[${NEXT_NAME}]！"
+			[ "$FLAG" == "2" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s2_1个状态中，故障次数超过$ss_failover_s2_2个，切换到节点列表的下个节点：[${NEXT_NAME}]！"
+			[ "$FLAG" == "3" ] && LOGM "$LOGTIME1 Xray Web Tool：检测到最近$ss_failover_s3_1个状态平均延迟:$PING超过$ss_failover_s3_2 ms，切换到节点列表的下个节点：[${NEXT_NAME}]！"
 			if [ "${NODE_COUNT}" -le "1" ];then
-				LOGM "$LOGTIME1 fancyss：检测到你只有一个节点！无法切换到下一个节点！只好关闭插件了！"
+				LOGM "$LOGTIME1 Xray Web Tool：检测到你只有一个节点！无法切换到下一个节点！只好关闭插件了！"
 				dbus set ss_basic_enable="0"
 				run start-stop-daemon -S -q -b -x /koolshare/ss/ssconfig.sh -- stop
 				return
@@ -287,14 +287,14 @@ failover_action(){
 			#start-stop-daemon -S -q -b -x /koolshare/ss/ssconfig.sh -- restart
 			echo_date "========================================================================" >/tmp/upload/ss_log.txt
 			echo_date "" >>/tmp/upload/ss_log.txt
-			echo_date "故障转移：重启fancyss！" >>/tmp/upload/ss_log.txt
+			echo_date "故障转移：重启Xray Web Tool！" >>/tmp/upload/ss_log.txt
 			echo_date "" >>/tmp/upload/ss_log.txt
 			echo_date "========================================================================" >>/tmp/upload/ss_log.txt
 			run start-stop-daemon -S -q -x /koolshare/ss/ssconfig.sh -- restart >>/tmp/upload/ss_log.txt
 			
 			dbus set ss_heart_beat="1"
 		elif [ "$ss_failover_s4_2" == "3" ];then
-			LOGM "$LOGTIME1 fancyss：切换到web延迟最低节点：[$(get_node_name_by_id "${FAST_NODE}")]..."
+			LOGM "$LOGTIME1 Xray Web Tool：切换到web延迟最低节点：[$(get_node_name_by_id "${FAST_NODE}")]..."
 			fss_set_current_node_id "${FAST_NODE}"
 			run start-stop-daemon -S -q -b -x /koolshare/ss/ssconfig.sh -- restart
 			dbus set ss_heart_beat="1"
@@ -304,13 +304,13 @@ failover_action(){
 
 failover_check_1(){
 	local LINES=$(($ss_failover_s1 + 3))
-	local START_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d' | tail -n "$LINES" | grep "===")
+	local START_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d; /Xray Web Tool：/d' | tail -n "$LINES" | grep "===")
 	if [ -n "$START_MARK" ];then
-		#echo "$LOGTIME1 fancyss：1-检测到前$LINES行刚提交，先不检测！"
+		#echo "$LOGTIME1 Xray Web Tool：1-检测到前$LINES行刚提交，先不检测！"
 		return
 	fi
 	
-	local OK_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d' | tail -n "$ss_failover_s1" | grep -Ec "200 OK|204 OK")
+	local OK_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d; /Xray Web Tool：/d' | tail -n "$ss_failover_s1" | grep -Ec "200 OK|204 OK")
 	if [ "$OK_MARK" == "0" ];then
 		failover_action 1
 	fi
@@ -318,13 +318,13 @@ failover_check_1(){
 
 failover_check_2(){
 	local LINES=$(($ss_failover_s2_1 + 3))
-	local START_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d' | tail -n "$LINES" | grep "===")
+	local START_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d; /Xray Web Tool：/d' | tail -n "$LINES" | grep "===")
 	if [ -n "$START_MARK" ];then
-		#echo "$LOGTIME1 fancyss：2-检测到前$LINES行刚提交，先不检测！"
+		#echo "$LOGTIME1 Xray Web Tool：2-检测到前$LINES行刚提交，先不检测！"
 		return
 	fi
 
-	local OK_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d' | tail -n "$ss_failover_s2_1" | grep -Evc "200 OK|204 OK")
+	local OK_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d; /Xray Web Tool：/d' | tail -n "$ss_failover_s2_1" | grep -Evc "200 OK|204 OK")
 	if [ "$OK_MARK" -gt "$ss_failover_s2_2" ];then
 		failover_action 2
 	fi
@@ -332,14 +332,14 @@ failover_check_2(){
 
 failover_check_3(){
 	local LINES=$(($ss_failover_s3_1 + 3))
-	local START_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d' | tail -n "$LINES" | grep "===")
+	local START_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d; /Xray Web Tool：/d' | tail -n "$LINES" | grep "===")
 	if [ -n "$START_MARK" ];then
-		#echo "$LOGTIME1 fancyss：3-检测到前$LINES行刚提交，先不检测！"
+		#echo "$LOGTIME1 Xray Web Tool：3-检测到前$LINES行刚提交，先不检测！"
 		return
 	fi
 
-	local OK_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d' | tail -n "$ss_failover_s3_1" | grep -E "200 OK|204 OK" | grep -oe "⏱ [0-9].* ms" | sed 's/⏱ //g'| sed 's/ ms//g' | awk '{sum+=$1} END {print sum/NR}' | awk '{printf "%.0f\n",$1}')
-	#echo "$LOGTIME1 fancyss：前15次状态平均延迟：$OK_MARK ！"
+	local OK_MARK=$(cat "$LOGFILE_F" | sed '/fancyss/d; /Xray Web Tool：/d' | tail -n "$ss_failover_s3_1" | grep -E "200 OK|204 OK" | grep -oe "⏱ [0-9].* ms" | sed 's/⏱ //g'| sed 's/ ms//g' | awk '{sum+=$1} END {print sum/NR}' | awk '{printf "%.0f\n",$1}')
+	#echo "$LOGTIME1 Xray Web Tool：前15次状态平均延迟：$OK_MARK ！"
 	if [ "$OK_MARK" -gt "$ss_failover_s3_2" ];then
 		failover_action 3 "$OK_MARK"
 	fi
@@ -350,7 +350,7 @@ heath_check(){
 	LOGTIME1=⌚$(TZ=UTC-8 date -R "+%H:%M:%S")
 	
 	[ "${ss_failover_enable}" != "1" ] && return
-	[ "${COUNT}" -eq "2" ] && echo "${LOGTIME1} fancyss：跳过刚提交后的2个状态，从此处开始的状态用于故障检测"
+	[ "${COUNT}" -eq "2" ] && echo "${LOGTIME1} Xray Web Tool：跳过刚提交后的2个状态，从此处开始的状态用于故障检测"
 	[ "${COUNT}" -le "2" ] && return
 
 	[ "${ss_failover_c1}" == "1" ] && failover_check_1
