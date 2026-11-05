@@ -12699,11 +12699,34 @@ function is_newer_release(latest, current) {
     for(var i=0;i<3;i++){if(a[i]!==b[i]) return a[i]>b[i];}
     return false;
 }
+var releaseCheckStarted = false;
+var latestReleaseVersion = "";
 function version_show() {
-    var version = window.FANCYSS_AC3100.version;
-
-    $("#updateBtn").text("检查更新 v" + version);
-    $.ajax({type:"POST",url:"/_api/",dataType:"json",timeout:20000,data:JSON.stringify({id:Math.floor(Math.random()*100000000),method:"ss_update.sh",params:["check"],fields:{}}),success:function(r){if (/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(r.result) && is_newer_release(r.result.slice(1), version)) $("#updateBtn").text("更新至 " + r.result);}});
+    var current = window.FANCYSS_AC3100.version;
+    var newer = latestReleaseVersion && is_newer_release(latestReleaseVersion, current);
+    $("#updateBtn").text(newer ? "立即更新" : "检查更新");
+    $("#updateVersion").text("v" + (newer ? latestReleaseVersion : current))
+        .attr("title", newer ? "最新版本；当前版本 v" + current : "当前版本 v" + current);
+}
+function check_release_once() {
+    version_show();
+    if (releaseCheckStarted) return;
+    releaseCheckStarted = true;
+    $.ajax({
+        type:"POST",url:"/_api/",dataType:"json",timeout:20000,
+        data:JSON.stringify({id:Math.floor(Math.random()*100000000),method:"ss_update.sh",params:["check"],fields:{}}),
+        success:function(r){
+            if (r && /^v[0-9]+\.[0-9]+\.[0-9]+$/.test(r.result)) {
+                latestReleaseVersion = r.result.slice(1);
+                version_show();
+            } else {
+                $("#updateVersion").attr("title", "在线检查暂不可用；当前版本 v" + window.FANCYSS_AC3100.version);
+            }
+        },
+        error:function(){
+            $("#updateVersion").attr("title", "在线检查失败；当前版本 v" + window.FANCYSS_AC3100.version);
+        }
+    });
 }
 function message_show() {
 	// Local-only notices: no remote advertising feed.
@@ -12725,7 +12748,7 @@ function tabSelect(w) {
 	$('#tablet_' + w).show();
 }
 var tab_actions = {
-    11: function(){ $("#apply_button").hide(); XwtDashboard.start(); },
+    11: function(){ $("#apply_button").hide(); XwtDashboard.start(); check_release_once(); },
 	0: function() {
 		$('#apply_button').show();
 		$('#ss_failover_save').hide();
@@ -15271,7 +15294,7 @@ function toggleKeyMask(o, show){
 																</label>
 															</div>
 															<div id="update_button" style="display:table-cell;float: left;position: absolute;margin-left:70px;padding: 5.5px 0px;">
-																<a id="updateBtn" type="button" class="ss_btn" style="cursor:pointer" onclick="update_ss()">检查并更新</a>
+																<a id="updateBtn" type="button" class="ss_btn" style="cursor:pointer" onclick="update_ss()">检查更新</a><span id="updateVersion" style="margin-left:8px;color:#ffcc00;white-space:nowrap"></span>
 															</div>
 
 															<div style="display:table-cell;float: left;margin-left:270px;position: absolute;padding: 5.5px 0px;">

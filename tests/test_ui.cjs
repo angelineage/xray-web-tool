@@ -71,3 +71,23 @@ assert.doesNotMatch(html,/RT-AC3100 兼容检测|性能优化/);
 
 assert.match(html,/#tablet_11 \.xwt-counter \{ color:#eee !important; \}/);
 assert.match(html,/#tablet_11 strong, #tablet_11 \.xwt-counter-value \{ color:#ffcc00 !important; \}/);
+
+// Runtime-tab entry checks online once; rendering and other tabs never poll GitHub.
+const releaseFields={},releaseRequests=[],updateCalls=[];
+function releaseQuery(id){return {text(value){releaseFields[id]=value;return this;},attr(key,value){releaseFields[id+':'+key]=value;return this;}};}
+releaseQuery.ajax=o=>releaseRequests.push(o);
+const releaseCtx={window:{FANCYSS_AC3100:{version:'0.1.3'}},$:releaseQuery,Math,db_ss:{},push_data:(...a)=>updateCalls.push(a)};
+vm.createContext(releaseCtx);
+vm.runInContext(html.slice(html.indexOf('function is_newer_release('),html.indexOf('function message_show()')),releaseCtx);
+vm.runInContext(html.slice(html.indexOf('function update_ss()'),html.indexOf('function tabSelect(')),releaseCtx);
+releaseCtx.version_show();assert.equal(releaseRequests.length,0);assert.equal(releaseFields['#updateVersion'],'v0.1.3');
+releaseCtx.check_release_once();releaseCtx.check_release_once();assert.equal(releaseRequests.length,1);
+assert.equal(JSON.parse(releaseRequests[0].data).params[0],'check');
+releaseRequests[0].success({result:'v0.1.4'});assert.equal(releaseFields['#updateVersion'],'v0.1.4');
+assert.equal(releaseFields['#updateBtn'],'\u7acb\u5373\u66f4\u65b0');
+releaseCtx.version_show();assert.equal(releaseFields['#updateVersion'],'v0.1.4');
+releaseCtx.update_ss();assert.equal(updateCalls[0][0],'ss_update.sh');assert.equal(updateCalls[0][1],'update');
+for(const tag of ['v0.1.3','v0.1.2','unavailable']){releaseRequests[0].success({result:tag});assert.equal(releaseFields['#updateVersion'],'v0.1.3');}
+releaseRequests[0].error();releaseCtx.check_release_once();assert.equal(releaseRequests.length,1);
+assert.match(html,/11: function\(\).*check_release_once\(\)/);
+console.log('Release checks passed: one check per page, separate version, upgrade comparison and update action.');
