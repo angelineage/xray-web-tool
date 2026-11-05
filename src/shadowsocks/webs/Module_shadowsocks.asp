@@ -683,7 +683,7 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
 <script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
-<script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261105-6"></script>
+<script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261105-7"></script>
 <script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=0.1.3-log-sync"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>

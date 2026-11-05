@@ -33,7 +33,7 @@
                         $('#xwt-cpu').text(!s.pid?'—':cpu===null?'采样中…':cpu.toFixed(1)+'%');
                         var elapsed=same?s.uptime-previous.uptime:0;
                         var traffic=s.traffic_available;
-                        $('#xwt-up').text(traffic&&same&&elapsed>0&&s.upload>=previous.upload?bytes((s.upload-previous.upload)/elapsed)+'/s':traffic?'采样中…':'统计不可用');
+                        $('#xwt-up').text(traffic&&same&&elapsed>0&&s.upload>=previous.upload?bitsPerSecond((s.upload-previous.upload)/elapsed):traffic?'采样中…':'统计不可用');
                         $('#xwt-down').text(traffic&&same&&elapsed>0&&s.download>=previous.download?bitsPerSecond((s.download-previous.download)/elapsed):traffic?'采样中…':'统计不可用');
                         $('#xwt-total-up').text(traffic?bytes(s.upload):'统计不可用');
                         $('#xwt-total-down').text(traffic?bytes(s.download):'统计不可用');
