@@ -6,6 +6,12 @@
         while(n>=1024&&i<units.length-1){n/=1024;i++;}
         return n.toFixed(i?1:0)+' '+units[i];
     }
+    function bitsPerSecond(n){
+        var units=['bps','Kbps','Mbps','Gbps'],i=0;
+        n*=8;
+        while(n>=1000&&i<units.length-1){n/=1000;i++;}
+        return n.toFixed(i?1:0)+' '+units[i];
+    }
     function active(){return !document.hidden && $('#tablet_11').is(':visible');}
     function stop(){generation++;if(timer!==null)clearTimeout(timer);timer=null;var xhr=pending;pending=null;if(xhr)xhr.abort();previous=null;}
     function start(){
@@ -28,7 +34,7 @@
                         var elapsed=same?s.uptime-previous.uptime:0;
                         var traffic=s.traffic_available;
                         $('#xwt-up').text(traffic&&same&&elapsed>0&&s.upload>=previous.upload?bytes((s.upload-previous.upload)/elapsed)+'/s':traffic?'采样中…':'统计不可用');
-                        $('#xwt-down').text(traffic&&same&&elapsed>0&&s.download>=previous.download?bytes((s.download-previous.download)/elapsed)+'/s':traffic?'采样中…':'统计不可用');
+                        $('#xwt-down').text(traffic&&same&&elapsed>0&&s.download>=previous.download?bitsPerSecond((s.download-previous.download)/elapsed):traffic?'采样中…':'统计不可用');
                         $('#xwt-total-up').text(traffic?'上传 '+bytes(s.upload):'上传统计不可用');
                         $('#xwt-total-down').text(traffic?'下载 '+bytes(s.download):'下载统计不可用');
                         $('#xwt-error').text('');

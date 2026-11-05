@@ -325,83 +325,6 @@ defer_websocketd_binary_for_self_update() {
 	echo_date "自更新日志通道仍由当前 websocketd 承载，新 websocketd 将在日志结束后静默替换。"
 }
 
-restart_status_runtime_async() {
-	local helper="/tmp/fancyss_restart_status_runtime.sh"
-	cat > "${helper}" <<-'EOF'
-		#!/bin/sh
-		LOG_FILE="/tmp/upload/status-runtime-helper.log"
-		log_status_runtime() {
-			mkdir -p /tmp/upload
-			printf '【%s】: %s\n' "$(TZ=UTC-8 date -R "+%Y%m%d %X")" "$*" >> "${LOG_FILE}" 2>/dev/null
-		}
-		start_status_serve_direct() {
-			[ -x "/koolshare/bin/status-tool" ] || return 1
-			chn="$(dbus get ss_basic_curl)"
-			frn="$(dbus get ss_basic_furl)"
-			ipv6="$(dbus get ss_basic_proxy_ipv6)"
-			[ -n "${chn}" ] || chn="http://connectivitycheck.platform.hicloud.com/generate_204"
-			[ -n "${frn}" ] || frn="http://www.google.com/generate_204"
-			ps w | grep -E '(^| )/koolshare/bin/status-tool serve( |$)' | grep -v grep | while read -r pid rest
-			do
-				[ -n "${pid}" ] && kill "${pid}" >/dev/null 2>&1 || true
-			done
-			rm -f /tmp/status-tool.sock /var/run/status-tool-serve.pid >/dev/null 2>&1
-			log_status_runtime "starting status-tool serve"
-			env -i PATH="/koolshare/bin:/usr/sbin:/usr/bin:/sbin:/bin" /koolshare/bin/status-tool serve \
-				--socket-path /tmp/status-tool.sock \
-				--china-url "${chn}" \
-				--foreign-url "${frn}" \
-				--proxy-ipv6 "${ipv6:-0}" \
-				--foreign-proxy "socks5://127.0.0.1:23456" \
-				--state-file /tmp/upload/ss_status_daemon.json \
-				--legacy-file /tmp/upload/ss_status_front.txt >/tmp/upload/status-tool-serve.log 2>&1 &
-			echo "$!" >/var/run/status-tool-serve.pid
-			sleep 1
-			if [ -S /tmp/status-tool.sock ] && ps w | grep -E '(^| )/koolshare/bin/status-tool serve( |$)' | grep -v grep >/dev/null 2>&1; then
-				log_status_runtime "status-tool serve started"
-			else
-				log_status_runtime "status-tool serve did not stay alive"
-			fi
-		}
-		status_serve_alive() {
-			[ -S /tmp/status-tool.sock ] && ps w | grep -E '(^| )/koolshare/bin/status-tool serve( |$)' | grep -v grep >/dev/null 2>&1
-		}
-		should_start_status_serve() {
-			[ "$(dbus get ss_basic_enable)" = "1" ] || return 1
-			[ "$(dbus get ss_failover_enable)" != "1" ] || return 1
-			return 1 # AC3100 uses on-demand curl compatibility probes
-		}
-		wait_status_preready() {
-			local waited=0
-			while ps w | grep -F "/koolshare/ss/ssconfig.sh" | grep -v grep >/dev/null 2>&1
-			do
-				[ "${waited}" -ge 20 ] && break
-				sleep 1
-				waited=$((waited + 1))
-			done
-			waited=0
-			while ! netstat -nlp 2>/dev/null | grep -w "23456" | grep -Eq "xray|v2ray|naive|tuic|anytls-zig|rss-local"
-			do
-				[ "${waited}" -ge 15 ] && break
-				sleep 1
-				waited=$((waited + 1))
-			done
-		}
-		sleep 2
-		log_status_runtime "checking status runtime"
-		should_start_status_serve && wait_status_preready && start_status_serve_direct
-		sleep 3
-		if should_start_status_serve && ! status_serve_alive; then
-			log_status_runtime "status runtime missing, retry"
-			wait_status_preready
-			start_status_serve_direct
-		fi
-		rm -f "$0" >/dev/null 2>&1
-	EOF
-	chmod +x "${helper}" >/dev/null 2>&1
-	sh "${helper}" >/dev/null 2>&1 &
-}
-
 report_install_migration_progress() {
 	echo_date "$1"
 }
@@ -2051,7 +1974,6 @@ install_now(){
 	if [ "${ENABLE}" == "1" -a -f "/koolshare/ss/ssconfig.sh" ];then
 		echo_date 重启科学上网插件！
 		sh /koolshare/ss/ssconfig.sh restart
-		restart_status_runtime_async
 		handle_websocketd_after_install
 	else
 		handle_websocketd_after_install

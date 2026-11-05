@@ -545,44 +545,6 @@ GET_PROC_UPTIME_MULTI() {
 	[ -n "${first}" ] && echo "${first}" || echo "-"
 }
 
-GET_STATUS_TOOL_MODE() {
-	if [ "${ss_failover_enable}" = "1" ]; then
-		echo "daemon"
-		return 0
-	fi
-	echo "curl-compat"
-	return 0
-}
-
-GET_STATUS_TOOL_PID() {
-	local mode="$1"
-	local pidfile=""
-	local pid=""
-	case "${mode}" in
-	daemon)
-		pidfile="/var/run/status-tool.pid"
-		;;
-	serve)
-		pidfile="/var/run/status-tool-serve.pid"
-		;;
-	*)
-		return 1
-		;;
-	esac
-
-	if [ -f "${pidfile}" ]; then
-		pid="$(cat "${pidfile}" 2>/dev/null)"
-		if [ -n "${pid}" ] && [ -r "/proc/${pid}/cmdline" ]; then
-			tr '\0' ' ' < "/proc/${pid}/cmdline" | grep -Eq '(^| )/koolshare/bin/status-tool[[:space:]]+'"${mode}"'([[:space:]]|$)' && {
-				echo "${pid}"
-				return 0
-			}
-		fi
-	fi
-
-	ps w | grep -E '(^| )/koolshare/bin/status-tool '"${mode}"'( |$)' | grep -v grep | awk '{print $1}'
-}
-
 GET_WEBSOCKETD_PID() {
 	local pidfile="/var/run/fancyss-websocketd.pid"
 	local pid=""
@@ -601,10 +563,6 @@ GET_WEBSOCKETD_PID() {
 
 GET_PROG_STAT(){
 	local current_type="$(GET_CURRENT_NODE_TYPE_ID)"
-	local status_tool_mode=""
-	local STATUS_TOOL_PID=""
-	local STATUS_TOOL_RSS=""
-	local STATUS_TOOL_UPTIME=""
 	local WEBSOCKETD_PID=""
 	local WEBSOCKETD_RSS=""
 	local WEBSOCKETD_UPTIME=""
@@ -734,22 +692,10 @@ if [ "${current_type}" == "1" ]; then
 		fi
 	fi
 
-	status_tool_mode="$(GET_STATUS_TOOL_MODE)"
-	if fss_probe_legacy_kernel; then
-		if [ "${ss_failover_enable}" = "1" ]; then
-			echo "curl-compat\t兼容模式\t\t状态探测(后台监测)"
-		else
-			echo "curl-compat\t兼容模式\t\t状态探测(按需检测)"
-		fi
-	elif [ -n "${status_tool_mode}" ]; then
-		STATUS_TOOL_PID="$(GET_STATUS_TOOL_PID "${status_tool_mode}")"
-		STATUS_TOOL_RSS=$(GET_VM_RSS_MULTI ${STATUS_TOOL_PID})
-		STATUS_TOOL_UPTIME=$(GET_PROC_UPTIME_MULTI ${STATUS_TOOL_PID})
-		if [ -n "${STATUS_TOOL_PID}" ]; then
-			echo "status-tool	运行中🟢		状态探测(${status_tool_mode})	${STATUS_TOOL_PID}		${STATUS_TOOL_RSS}		${STATUS_TOOL_UPTIME}"
-		else
-			echo "status-tool	未运行🔴		状态探测(${status_tool_mode})"
-		fi
+	if [ "${ss_failover_enable}" = "1" ]; then
+		echo "curl-compat\t兼容模式\t\t状态探测(后台监测)"
+	else
+		echo "curl-compat\t兼容模式\t\t状态探测(按需检测)"
 	fi
 
 	WEBSOCKETD_PID="$(GET_WEBSOCKETD_PID)"

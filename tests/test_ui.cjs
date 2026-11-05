@@ -65,3 +65,5 @@ const statusText='foreign <font color="#FF0000">timeout</font>@@local 65 ms';
 const statusEscaped=require('child_process').execFileSync(process.platform==='win32'?'C:/Program Files/Git/bin/bash.exe':'bash',['-s'],{input:"printf '%s' '"+statusText+"' | "+statusSed+"\n",encoding:'utf8'});
 assert.equal(JSON.parse('{"result":"'+statusEscaped+'"}').result,statusText);
 console.log('Legacy status JSON escape check passed.');
+
+assert.doesNotMatch(html,/RT-AC3100 兼容检测|性能优化/);
