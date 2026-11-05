@@ -25,13 +25,13 @@ SUB_RAW_CACHE_DIR="/koolshare/configs/fancyss/subscribe_cache/raw"
 SUB_PARSED_CACHE_DIR="/koolshare/configs/fancyss/subscribe_cache/parsed"
 # 订阅缓存的 raw / parsed / meta 都放在持久化目录。
 # 每次调整 meta 结构或缓存判定语义时，递增 schema 即可触发重建。
-SUB_PARSED_CACHE_META_SCHEMA="2"
+SUB_PARSED_CACHE_META_SCHEMA="3"
 SUB_STORAGE_SCHEMA=""
 SUB_SCHEMA2_NATIVE_INITIALIZED=0
 NODES_SEQ=""
 NODE_INDEX=""
 SEQ_NU="0"
-SUB_MODE=$(dbus get ssr_subscribe_mode)
+SUB_MODE=$(dbus get ss_basic_subscribe_mode)
 [ -z "${SUB_MODE}" ] && SUB_MODE=2
 HY2_UP_SPEED=$(dbus get ss_basic_hy2_up_speed)
 HY2_DL_SPEED=$(dbus get ss_basic_hy2_dl_speed)
@@ -236,7 +236,7 @@ sub_reset_active_profile_context() {
 	[ -z "${SUB_BY_PROXY}" ] && SUB_BY_PROXY=0
 	[ -n "${SUB_TOOL_NODE_LOG}" ] || SUB_TOOL_NODE_LOG=0
 	[ -n "${SUB_KEEP_INFO_NODE}" ] || SUB_KEEP_INFO_NODE=0
-	SUB_MODE=$(dbus get ssr_subscribe_mode)
+	SUB_MODE=$(dbus get ss_basic_subscribe_mode)
 	[ -z "${SUB_MODE}" ] && SUB_MODE=2
 	HY2_UP_SPEED=$(dbus get ss_basic_hy2_up_speed)
 	HY2_DL_SPEED=$(dbus get ss_basic_hy2_dl_speed)
@@ -1547,14 +1547,11 @@ sub_filter_fancyss_jsonl_file(){
 		0)
 			type_name="SS"
 			;;
-		1)
-			type_name="SSR"
-			;;
 		3)
 			type_name="vmess"
 			;;
 		4)
-			type_name="${xray_prot:-xray}"
+			type_name="${xray_prot:-vless}"
 			;;
 		5)
 			type_name="trojan"
@@ -1633,6 +1630,9 @@ sub_try_parse_uri_lines_with_tool(){
 
 	[ "${SUB_TOOL_NODE_LOG}" = "1" ] && subtool_log_level="verbose"
 	rm -f "${tmp_output}" "${filtered_output}" "${subtool_log_file}" >/dev/null 2>&1
+	local supported_input="${output_file}.supported.$$"
+	grep -Eiv "^[[:space:]]*ssr://" "${input_file}" > "${supported_input}" || :
+	input_file="${supported_input}"
 	set -- parse-uri-lines \
 		--input "${input_file}" \
 		--output "${tmp_output}" \
@@ -1665,10 +1665,12 @@ sub_try_parse_uri_lines_with_tool(){
 	[ -n "${effective_hy2_up}" ] && set -- "$@" --hy2-up "${effective_hy2_up}"
 	[ -n "${effective_hy2_dl}" ] && set -- "$@" --hy2-dl "${effective_hy2_dl}"
 	"${sub_tool}" "$@" >/dev/null 2>&1 || {
-		rm -f "${tmp_output}" "${filtered_output}" "${subtool_log_file}" "${diff_output_file}" "${diff_summary_file}" "${summary_output_file}" >/dev/null 2>&1
+		rm -f "${supported_input}" "${tmp_output}" "${filtered_output}" "${subtool_log_file}" "${diff_output_file}" "${diff_summary_file}" "${summary_output_file}" >/dev/null 2>&1
 		return 1
 	}
 
+	rm -f "${supported_input}"
+	jq -c 'select((.type | tostring) != "1")' "${tmp_output}" > "${tmp_output}.supported" && mv "${tmp_output}.supported" "${tmp_output}" || return 1
 	if [ "${tool_can_filter}" = "1" ];then
 		mv -f "${tmp_output}" "${output_file}"
 	else
@@ -1827,9 +1829,6 @@ sub_fancyss_type_name(){
 	0)
 		echo "SS"
 		;;
-	1)
-		echo "SSR"
-		;;
 	3)
 		echo "vmess"
 		;;
@@ -1873,9 +1872,6 @@ sub_fancyss_type_prefix(){
 	case "${type_id}" in
 	0)
 		echo "🟢SS节点："
-		;;
-	1)
-		echo "🔵SSR节点："
 		;;
 	3)
 		echo "🟠vmess节点："
@@ -1924,7 +1920,6 @@ sub_log_fancyss_parse_summary(){
 	run jq -r '[.type // "", .xray_prot // ""] | @tsv' "${file}" 2>/dev/null | awk -F '\t' '
 		function label(type_id, xray_prot) {
 			if (type_id == "0") return "🟢SS节点";
-			if (type_id == "1") return "🔵SSR节点";
 			if (type_id == "3") return "🟠vmess节点";
 			if (type_id == "4" && xray_prot == "vmess") return "🟠vmess节点";
 			if (type_id == "4" && xray_prot == "vless") return "🟣vless节点";
@@ -2010,7 +2005,6 @@ sub_log_fancyss_parse_summary_json(){
 		fi
 	fi
 	local ss=$(sub_get_parse_summary_scheme_count "${file}" "kept_counts" "ss")
-	local ssr=$(sub_get_parse_summary_scheme_count "${file}" "kept_counts" "ssr")
 	local vmess=$(sub_get_parse_summary_scheme_count "${file}" "kept_counts" "vmess")
 	local vless=$(sub_get_parse_summary_scheme_count "${file}" "kept_counts" "vless")
 	local trojan=$(sub_get_parse_summary_scheme_count "${file}" "kept_counts" "trojan")
@@ -2019,7 +2013,6 @@ sub_log_fancyss_parse_summary_json(){
 	local hy2=$(sub_get_parse_summary_scheme_count "${file}" "kept_counts" "hysteria2")
 	local anytls=$(sub_get_parse_summary_scheme_count "${file}" "kept_counts" "anytls")
 	[ -n "${ss}" ] || ss=0
-	[ -n "${ssr}" ] || ssr=0
 	[ -n "${vmess}" ] || vmess=0
 	[ -n "${vless}" ] || vless=0
 	[ -n "${trojan}" ] || trojan=0
@@ -2028,7 +2021,6 @@ sub_log_fancyss_parse_summary_json(){
 	[ -n "${hy2}" ] || hy2=0
 	[ -n "${anytls}" ] || anytls=0
 	[ "${ss}" -gt "0" ] && echo_date "🟢SS节点：${ss}个"
-	[ "${ssr}" -gt "0" ] && echo_date "🔵SSR节点：${ssr}个"
 	[ "${vmess}" -gt "0" ] && echo_date "🟠vmess节点：${vmess}个"
 	[ "${vless}" -gt "0" ] && echo_date "🟣vless节点：${vless}个"
 	[ "${trojan}" -gt "0" ] && echo_date "🟡trojan节点：${trojan}个"
@@ -2042,14 +2034,13 @@ sub_log_fancyss_parse_summary_json(){
 sub_collect_protocol_counts_from_decoded_file(){
 	local file="$1"
 	local pkg_type="$2"
-	local raw=0 ss=0 ssr=0 vmess=0 vless=0 trojan=0 hy2=0 tuic=0 naive=0 anytls=0 total=0
+	local raw=0 ss=0 vmess=0 vless=0 trojan=0 hy2=0 tuic=0 naive=0 anytls=0 total=0
 	[ -f "${file}" ] || {
-		echo "0 0 0 0 0 0 0 0 0 0 0"
+		echo "0 0 0 0 0 0 0 0 0 0"
 		return 1
 	}
 	raw=$(grep -c "://" "${file}" 2>/dev/null)
 	ss=$(grep -Ec "^ss://" "${file}" 2>/dev/null)
-	ssr=$(grep -Ec "^ssr://" "${file}" 2>/dev/null)
 	vmess=$(grep -Ec "^vmess://" "${file}" 2>/dev/null)
 	vless=$(grep -Ec "^vless://" "${file}" 2>/dev/null)
 	trojan=$(grep -Ec "^trojan://" "${file}" 2>/dev/null)
@@ -2057,25 +2048,24 @@ sub_collect_protocol_counts_from_decoded_file(){
 	tuic=$(grep -Ec "^tuic://" "${file}" 2>/dev/null)
 	naive=$(grep -Ec "^naive\\+https://|^naive\\+quic://" "${file}" 2>/dev/null)
 	anytls=$(grep -Ec "^anytls://" "${file}" 2>/dev/null)
-	total=$((ss + ssr + vmess + vless + trojan + hy2))
+	total=$((ss + vmess + vless + trojan + hy2))
 	if [ "${pkg_type}" = "full" ];then
 		total=$((total + tuic + naive + anytls))
 	fi
-	echo "${raw} ${ss} ${ssr} ${vmess} ${vless} ${trojan} ${hy2} ${tuic} ${naive} ${anytls} ${total}"
+	echo "${raw} ${ss} ${vmess} ${vless} ${trojan} ${hy2} ${tuic} ${naive} ${anytls} ${total}"
 }
 
 sub_collect_protocol_counts_from_summary(){
 	local file="$1"
 	local pkg_type="$2"
-	local raw=0 ss=0 ssr=0 vmess=0 vless=0 trojan=0 hy2=0 tuic=0 naive=0 anytls=0 total=0
+	local raw=0 ss=0 vmess=0 vless=0 trojan=0 hy2=0 tuic=0 naive=0 anytls=0 total=0
 	[ -f "${file}" ] || {
-		echo "0 0 0 0 0 0 0 0 0 0 0"
+		echo "0 0 0 0 0 0 0 0 0 0"
 		return 1
 	}
 	raw=$(sub_get_parse_summary_value "${file}" "uri_lines")
 	[ -n "${raw}" ] || raw=$(sub_get_parse_summary_value "${file}" "total_lines")
 	ss=$(sub_get_parse_summary_scheme_count "${file}" "raw_counts" "ss")
-	ssr=$(sub_get_parse_summary_scheme_count "${file}" "raw_counts" "ssr")
 	vmess=$(sub_get_parse_summary_scheme_count "${file}" "raw_counts" "vmess")
 	vless=$(sub_get_parse_summary_scheme_count "${file}" "raw_counts" "vless")
 	trojan=$(sub_get_parse_summary_scheme_count "${file}" "raw_counts" "trojan")
@@ -2085,7 +2075,6 @@ sub_collect_protocol_counts_from_summary(){
 	anytls=$(sub_get_parse_summary_scheme_count "${file}" "raw_counts" "anytls")
 	[ -n "${raw}" ] || raw=0
 	[ -n "${ss}" ] || ss=0
-	[ -n "${ssr}" ] || ssr=0
 	[ -n "${vmess}" ] || vmess=0
 	[ -n "${vless}" ] || vless=0
 	[ -n "${trojan}" ] || trojan=0
@@ -2093,26 +2082,25 @@ sub_collect_protocol_counts_from_summary(){
 	[ -n "${tuic}" ] || tuic=0
 	[ -n "${naive}" ] || naive=0
 	[ -n "${anytls}" ] || anytls=0
-	total=$((ss + ssr + vmess + vless + trojan + hy2))
+	total=$((ss + vmess + vless + trojan + hy2))
 	if [ "${pkg_type}" = "full" ];then
 		total=$((total + tuic + naive + anytls))
 	fi
-	echo "${raw} ${ss} ${ssr} ${vmess} ${vless} ${trojan} ${hy2} ${tuic} ${naive} ${anytls} ${total}"
+	echo "${raw} ${ss} ${vmess} ${vless} ${trojan} ${hy2} ${tuic} ${naive} ${anytls} ${total}"
 }
 
 sub_log_protocol_counts(){
 	local raw="$1"
 	local ss="$2"
-	local ssr="$3"
-	local vmess="$4"
-	local vless="$5"
-	local trojan="$6"
-	local hy2="$7"
-	local tuic="$8"
-	local naive="$9"
-	local anytls="${10}"
-	local total="${11}"
-	local pkg_type="${12}"
+	local vmess="$3"
+	local vless="$4"
+	local trojan="$5"
+	local hy2="$6"
+	local tuic="$7"
+	local naive="$8"
+	local anytls="${9}"
+	local total="${10}"
+	local pkg_type="${11}"
 	[ -n "${raw}" ] || raw=0
 	[ -n "${total}" ] || total=0
 	echo_date "😀初步解析成功！共获得${raw}个节点！"
@@ -2125,7 +2113,6 @@ sub_log_protocol_counts(){
 	fi
 	echo_date "ℹ️具体情况如下："
 	[ "${ss}" -gt "0" ] && echo_date "🟢ss节点：${ss}个"
-	[ "${ssr}" -gt "0" ] && echo_date "🔵ssr节点：${ssr}个"
 	[ "${vmess}" -gt "0" ] && echo_date "🟠vmess节点：${vmess}个"
 	[ "${vless}" -gt "0" ] && echo_date "🟣vless节点：${vless}个"
 	[ "${trojan}" -gt "0" ] && echo_date "🟡trojan节点：${trojan}个"
@@ -2168,7 +2155,7 @@ sub_prepare_decoded_file(){
 		cp -f "${encoded_file}" "${decoded_file}"
 		return 0
 	fi
-	head_count=$(grep -Ec "^ss://|^ssr://|^vmess://|^vless://|^trojan://|^hysteria2://|^hy2://|^tuic://|^naive\\+https://|^naive\\+quic://|^anytls://" "${encoded_file}")
+	head_count=$(grep -Ec "^ss://|^vmess://|^vless://|^trojan://|^hysteria2://|^hy2://|^tuic://|^naive\\+https://|^naive\\+quic://|^anytls://" "${encoded_file}")
 	if [ "${head_count}" -gt "0" ];then
 		echo_date "📄检测到明文的订阅格式，无需解码，继续！"
 		cp -f "${encoded_file}" "${decoded_file}"
@@ -5305,11 +5292,8 @@ get_type_name() {
 		0)
 			echo "ss"
 		;;
-		1)
-			echo "ssr"
-		;;
 		3)
-			echo "V2ray"
+			echo "VMess"
 		;;
 		4)
 			echo "xray"
@@ -5771,115 +5755,6 @@ add_ss_node(){
 	fi
 }
 
-add_ssr_node(){
-	local urllink="$1"
-	local action="$2"
-	unset decrypt_info server server_port protocol encrypt_method obfs password obfsparam_temp obfsparam protoparam_temp protoparam remarks_temp remarks group_temp group
-
-	local decrypt_info=$(dec64 ${urllink})
-
-	# mysql.accessconnect.cc:699:auth_aes128_md5:rc4-md5:tls1.2_ticket_auth:ZGkxNVBW/?obfsparam=MWRjZjMxOTg2NjEud3d3Lmdvdi5oaw&protoparam=MTk4NjYxOjMydUk5RQ&remarks=TGFyZ2Ug5Y-w54GjMDQgLSBJRVBMIHwg5YCN546HOjEuNQ&group=5rW36LGa5rm-
-	# server:port:protocol:method:obfs:password/?obfsparam=xxx&protoparam=xxx&remarks=xxx&group=xxx
-	server=$(echo "${decrypt_info}" | awk -F':' '{print $1}' | sed 's/[[:space:]]//g')
-	server_port=$(echo "${decrypt_info}" | awk -F':' '{print $2}')
-	encrypt_method=$(echo "${decrypt_info}" |awk -F':' '{print $4}')
-	password=$(echo "${decrypt_info}" | awk -F':' '{print $6}' | awk -F'/' '{print $1}')
-	
-	protocol=$(echo "${decrypt_info}" | awk -F':' '{print $3}')
-	protoparam_temp=$(echo "${decrypt_info}" | awk -F':' '{print $6}' | grep -Eo "protoparam.+" | sed 's/protoparam=//g' | awk -F'&' '{print $1}')
-	if [ -n "${protoparam_temp}" ];then
-		protoparam=$(dec64 ${protoparam_temp} | sed 's/_compatible//g' | sed 's/[[:space:]]//g')
-	else
-		protoparam=""
-	fi
-	
-	obfs=$(echo "${decrypt_info}" | awk -F':' '{print $5}' | sed 's/_compatible//g')
-	obfsparam_temp=$(echo "${decrypt_info}" | awk -F':' '{print $6}' | grep -Eo "obfsparam.+" | sed 's/obfsparam=//g' | awk -F'&' '{print $1}')
-	if [ -n "${obfsparam_temp}" ];then
-		obfsparam=$(dec64 ${obfsparam_temp})
-	else
-		obfsparam=""
-	fi
-	remarks_temp=$(echo "${decrypt_info}" | awk -F':' '{print $6}' | grep -Eo "remarks.+" | sed 's/remarks=//g' | awk -F'&' '{print $1}')
-	# 在线订阅必须要remarks信息
-	if [ "${action}" == "1" ]; then
-		if [ -n "${remarks_temp}" ];then
-			remarks=$(dec64 ${remarks_temp})
-		else
-			remarks=""
-		fi
-	elif [ "${action}" == "2" ]; then
-		if [ -n "${remarks_temp}" ];then
-			remarks=$(dec64 ${remarks_temp})
-		else
-			remarks="${server}"
-		fi
-	fi
-	group_temp=$(echo "${decrypt_info}" | awk -F':' '{print $6}' | grep -Eo "group.+" | sed 's/group=//g' | awk -F'&' '{print $1}')
-	if [ "${action}" == "1" ]; then
-		# 在线订阅，group从订阅链接里拿
-		if [ -n "${group_temp}" ];then
-			ssr_group=$(dec64 $group_temp)
-		fi
-		ssr_group=$(normalize_group_name "${ssr_group}")
-		[ -z "${ssr_group}" ] && ssr_group=${DOMAIN_NAME}
-		ssr_group_hash="${ssr_group}_${SUB_SOURCE_TAG}"
-	elif [ "${action}" == "2" ]; then
-		# 离线离线添加节点，group不需要
-		ssr_group=""
-		ssr_group_hash=""
-	fi
-	
-	# for debug, please keep it here~
-	# echo ------------
-	# echo group: $group
-	# echo remarks: $remarks
-	# echo server: $server
-	# echo server_port: $server_port
-	# echo password: $password
-	# echo encrypt_method: $encrypt_method
-	# echo protocol: $protocol
-	# echo protoparam: $protoparam
-	# echo obfs: $obfs
-	# echo obfsparam: $obfsparam
-	# echo ------------
-
-	if [ -z "${server}" -o -z "${remarks}" -o -z "${server_port}" -o -z "${password}" -o -z "${protocol}" -o -z "${obfs}" -o -z "${encrypt_method}" ]; then
-		echo_date "🔴SSR节点：检测到一个错误节点，跳过！"
-		return 1
-	fi
-
-	# 过滤节点
-	if [ "${action}" == "1" ]; then
-		filter_nodes "SSR" "${remarks}" "${server}"
-		if [ "$?" != "0" ];then
-			return 1
-		fi
-	fi
-
-	sub_log_node_success "🔵SSR节点：$remarks"
-	
-	json_init
-	json_add_string group "${ssr_group_hash}"
-	json_add_string method "${encrypt_method}"
-	json_add_string mode "${SUB_MODE}"
-	json_add_string name "${remarks}"
-	json_add_string password "${password}"
-	json_add_string port "${server_port}"
-	json_add_string rss_obfs "${obfs}"
-	json_add_string rss_obfs_param "${obfsparam}"
-	json_add_string rss_protocol "${protocol}"
-	json_add_string rss_protocol_param "${protoparam}"
-	json_add_string server "${server}"
-	json_add_string type "1"
-
-	if [ "${action}" == "1" ];then
-		json_write_object ${DIR}/online_${sub_count}_${SUB_SOURCE_TAG}.txt
-	elif [ "${action}" == "2" ]; then
-		json_write_object ${DIR}/offline_node_new.txt
-	fi
-}
-
 json_query(){
 	echo "${2}" | sed 's/^{//;s/}$//;s/,"/,\n"/g;s/":"/":/g' | sed 's/,$//g;s/"$//g' | sed -n "s/^\"${1}\":\(.\+\)\$/\1/p"
 }
@@ -6145,7 +6020,6 @@ sub_log_unsupported_scheme_summary(){
 	awk -F '://' '
 		BEGIN {
 			supported["ss"] = 1
-			supported["ssr"] = 1
 			supported["vmess"] = 1
 			supported["vless"] = 1
 			supported["trojan"] = 1
@@ -7559,7 +7433,7 @@ get_online_rule_now(){
 	rm -f "${UNSUPPORTED_PROTO_LOG_FILE}" >/dev/null 2>&1
 
 	# 3. try to delete some file left by last sublink subscribe
-	rm -rf /tmp/ssr_subscribe_file* >/dev/null 2>&1
+	rm -rf /tmp/xwt_subscribe_file* >/dev/null 2>&1
 	
 	# 7. download sublink
 	echo_date "📁准备下载订阅链接到本地临时文件，请稍等..."
@@ -7585,7 +7459,7 @@ get_online_rule_now(){
 	echo_date "🔍开始解析节点信息..."
 	local NODE_NU_RAW="0"
 	local NODE_NU_SS="0"
-	local NODE_NU_SR="0"
+	local="0"
 	local NODE_NU_VM="0"
 	local NODE_NU_VL="0"
 	local NODE_NU_TJ="0"
@@ -7604,17 +7478,17 @@ get_online_rule_now(){
 		echo_date "🧩检测到sub-tool，尝试使用新解析器..."
 		if sub_try_parse_uri_lines_with_tool "${DIR}/sub_file_encode_${SUB_LINK_HASH:0:4}.txt" "${ONLINE_PARSED_FILE}" "${DOMAIN_MAPPED_GROUP}" "${SUB_SOURCE_TAG}" "${pkg_type}";then
 			PARSED_BY_SUB_TOOL="1"
-			read NODE_NU_RAW NODE_NU_SS NODE_NU_SR NODE_NU_VM NODE_NU_VL NODE_NU_TJ NODE_NU_H2 NODE_NU_TC NODE_NU_NV NODE_NU_AT NODE_NU_TT <<-EOF
+			read NODE_NU_RAW NODE_NU_SS NODE_NU_VM NODE_NU_VL NODE_NU_TJ NODE_NU_H2 NODE_NU_TC NODE_NU_NV NODE_NU_AT NODE_NU_TT <<-EOF
 			$(sub_collect_protocol_counts_from_summary "${SUB_TOOL_PARSE_SUMMARY_FILE_CURRENT}" "${pkg_type}")
 			EOF
 			if [ "${NODE_NU_TT}" = "0" ] && [ "${NODE_NU_RAW}" = "0" ];then
-				echo_date "⚠️订阅中不包含任何ss/ssr/vmess/vless/trojan/hysteria2/tuic/naive/anytls节点，退出！"
+				echo_date "⚠️订阅中不包含任何ss/vmess/vless/trojan/hysteria2/tuic/naive/anytls节点，退出！"
 				return 1
 			fi
 			if [ -f "${SUB_TOOL_PARSE_SUMMARY_FILE_CURRENT}" ];then
-				sub_log_fancyss_parse_summary_json "${SUB_TOOL_PARSE_SUMMARY_FILE_CURRENT}" || sub_log_protocol_counts "${NODE_NU_RAW}" "${NODE_NU_SS}" "${NODE_NU_SR}" "${NODE_NU_VM}" "${NODE_NU_VL}" "${NODE_NU_TJ}" "${NODE_NU_H2}" "${NODE_NU_TC}" "${NODE_NU_NV}" "${NODE_NU_AT}" "${NODE_NU_TT}" "${pkg_type}" || return 1
+				sub_log_fancyss_parse_summary_json "${SUB_TOOL_PARSE_SUMMARY_FILE_CURRENT}" || sub_log_protocol_counts "${NODE_NU_RAW}" "${NODE_NU_SS}" "${NODE_NU_VM}" "${NODE_NU_VL}" "${NODE_NU_TJ}" "${NODE_NU_H2}" "${NODE_NU_TC}" "${NODE_NU_NV}" "${NODE_NU_AT}" "${NODE_NU_TT}" "${pkg_type}" || return 1
 			else
-				sub_log_protocol_counts "${NODE_NU_RAW}" "${NODE_NU_SS}" "${NODE_NU_SR}" "${NODE_NU_VM}" "${NODE_NU_VL}" "${NODE_NU_TJ}" "${NODE_NU_H2}" "${NODE_NU_TC}" "${NODE_NU_NV}" "${NODE_NU_AT}" "${NODE_NU_TT}" "${pkg_type}" || return 1
+				sub_log_protocol_counts "${NODE_NU_RAW}" "${NODE_NU_SS}" "${NODE_NU_VM}" "${NODE_NU_VL}" "${NODE_NU_TJ}" "${NODE_NU_H2}" "${NODE_NU_TC}" "${NODE_NU_NV}" "${NODE_NU_AT}" "${NODE_NU_TT}" "${pkg_type}" || return 1
 			fi
 			sub_log_unsupported_scheme_summary "${DIR}/sub_file_decode_${SUB_LINK_HASH:0:4}.txt"
 			echo_date "-------------------------------------------------------------------"
@@ -7626,14 +7500,14 @@ get_online_rule_now(){
 		fi
 	fi
 	if [ "${PARSED_BY_SUB_TOOL}" != "1" ];then
-		read NODE_NU_RAW NODE_NU_SS NODE_NU_SR NODE_NU_VM NODE_NU_VL NODE_NU_TJ NODE_NU_H2 NODE_NU_TC NODE_NU_NV NODE_NU_AT NODE_NU_TT <<-EOF
+		read NODE_NU_RAW NODE_NU_SS NODE_NU_VM NODE_NU_VL NODE_NU_TJ NODE_NU_H2 NODE_NU_TC NODE_NU_NV NODE_NU_AT NODE_NU_TT <<-EOF
 		$(sub_collect_protocol_counts_from_decoded_file "${DIR}/sub_file_decode_${SUB_LINK_HASH:0:4}.txt" "${pkg_type}")
 		EOF
 		if [ "${NODE_NU_TT}" = "0" ] && [ "${NODE_NU_RAW}" = "0" ];then
-			echo_date "⚠️订阅中不包含任何ss/ssr/vmess/vless/trojan/hysteria2/tuic/naive/anytls节点，退出！"
+			echo_date "⚠️订阅中不包含任何ss/vmess/vless/trojan/hysteria2/tuic/naive/anytls节点，退出！"
 			return 1
 		fi
-		sub_log_protocol_counts "${NODE_NU_RAW}" "${NODE_NU_SS}" "${NODE_NU_SR}" "${NODE_NU_VM}" "${NODE_NU_VL}" "${NODE_NU_TJ}" "${NODE_NU_H2}" "${NODE_NU_TC}" "${NODE_NU_NV}" "${NODE_NU_AT}" "${NODE_NU_TT}" "${pkg_type}" || return 1
+		sub_log_protocol_counts "${NODE_NU_RAW}" "${NODE_NU_SS}" "${NODE_NU_VM}" "${NODE_NU_VL}" "${NODE_NU_TJ}" "${NODE_NU_H2}" "${NODE_NU_TC}" "${NODE_NU_NV}" "${NODE_NU_AT}" "${NODE_NU_TT}" "${pkg_type}" || return 1
 		sub_log_unsupported_scheme_summary "${DIR}/sub_file_decode_${SUB_LINK_HASH:0:4}.txt"
 		echo_date "-------------------------------------------------------------------"
 		while IFS= read -r node || [ -n "${node}" ]; do
@@ -7642,9 +7516,6 @@ get_online_rule_now(){
 			case ${node_type} in
 			ss)
 				add_ss_node "${node_info}" 1
-				;;
-			ssr)
-				add_ssr_node "${node_info}" 1
 				;;
 			vmess)
 				local _match=$(echo "${node_info}" | grep -E "@|\?|type")
@@ -8033,10 +7904,10 @@ subscribe_failed(){
 	#echo ""
 }
 
-# 添加ss:// ssr:// vmess:// vless:// trojan:// hysteria2:// hy2:// tuic:// naive+https:// naive+quic:// anytls://离线节点
+# 添加ss:// vmess:// vless:// trojan:// hysteria2:// hy2:// tuic:// naive+https:// naive+quic:// anytls://离线节点
 start_offline_update() {
 	echo_date "==================================================================="
-	echo_date "ℹ️通过ss/ssr/vmess/vless/trojan/hysteria2/tuic/naive/anytls链接添加节点..."
+	echo_date "ℹ️通过ss/vmess/vless/trojan/hysteria2/tuic/naive/anytls链接添加节点..."
 	mkdir -p $DIR
 	rm -rf $DIR/*
 	UNSUPPORTED_PROTO_LOG_FILE="${DIR}/unsupported_proto_offline.txt"
@@ -8050,9 +7921,6 @@ start_offline_update() {
 		case $node_type in
 		ss)
 			add_ss_node "${node_info}" 2
-			;;
-		ssr)
-			add_ssr_node "${node_info}" 2
 			;;
 		vmess)
 			local _match=$(echo "${node_info}" | grep -E "@|\?|type")
@@ -8178,7 +8046,7 @@ case $SH_ARG in
 	unset_lock
 	;;
 3)
-	# 使用订阅链接订阅ss/ssr/V2ray节点
+	# 使用订阅链接订阅ss/V2ray节点
 	set_lock
 	true > $LOG_FILE
 	[ "${WEB_ACTION}" == "1" ] && http_response "$1"
@@ -8188,7 +8056,7 @@ case $SH_ARG in
 	unset_lock
 	;;
 4)
-	# 添加ss:// ssr:// vmess://离线节点
+	# 添加ss:// vmess://离线节点
 	set_lock
 	true > $LOG_FILE
 	[ "${WEB_ACTION}" == "1" ] && http_response "$1"

@@ -13,7 +13,6 @@ export PATH=${NEW_PATH}
 # Variable definitions
 THREAD=""
 LOG_FILE=/tmp/upload/ss_log.txt
-CONFIG_FILE=/koolshare/ss/ssr.json
 LOCK_FILE=/var/lock/koolss.lock
 WS_PIDFILE=/var/run/fancyss-websocketd.pid
 DNSC_PORT=53
@@ -912,14 +911,11 @@ __get_type_abbr_name() {
 	0)
 		echo "SS"
 		;;
-	1)
-		echo "SSR"
-		;;
 	3)
-		echo "Vmess"
+		echo "VMess"
 		;;
 	4)
-		echo "Vless"
+		echo "VLESS"
 		;;
 	5)
 		echo "Trojan"
@@ -1261,17 +1257,7 @@ kill_process() {
 		kill -9 "$xray_process" >/dev/null 2>&1
 	fi
 
-	local rssredir=$(pidof rss-redir)
-	if [ -n "$rssredir" ]; then
-		echo_date "关闭ssr-redir进程..."
-		killall rss-redir >/dev/null 2>&1
-	fi
 
-	local ssrlocal=$(ps | grep -w rss-local | grep -v "grep" | grep -w "23456" | awk '{print $1}')
-	if [ -n "$ssrlocal" ]; then
-		echo_date "关闭ssr-local进程:23456端口..."
-		kill $ssrlocal >/dev/null 2>&1
-	fi
 
 	local sstunnel=$(pidof ss-tunnel)
 	if [ -n "$sstunnel" ]; then
@@ -1438,33 +1424,6 @@ resolv_server_ip() {
 }
 
 # create shadowsocks config file...
-creat_ssr_json() {
-	if [ -z "${WEB_ACTION}" ]; then
-		if [ -n "${WAN_ACTION}" ]; then
-			echo_date "检测到网络拨号/开机触发启动，不创建$(__get_type_abbr_name)配置文件，使用上次的配置文件！"
-			return 0
-		fi
-	else
-		echo_date "创建$(__get_type_abbr_name)配置文件到${CONFIG_FILE}"
-	fi
-
-	cat >${CONFIG_FILE} <<-EOF
-		{
-		    "server":"${ss_basic_server}",
-		    "server_port":${ss_basic_port},
-		    "local_address":"$(if ipv6_proxy_enabled; then echo '::'; else echo '0.0.0.0'; fi)",
-		    "local_port":3333,
-		    "password":"${ss_basic_password}",
-		    "timeout":600,
-		    "protocol":"$ss_basic_rss_protocol",
-		    "protocol_param":"$ss_basic_rss_protocol_param",
-		    "obfs":"$ss_basic_rss_obfs",
-		    "obfs_param":"$ss_basic_rss_obfs_param",
-		    "method":"$ss_basic_method"
-		}
-	EOF
-}
-
 get_proxy_server_ip(){
 	# 获取代理服务器ip地址
 	# 在代理程序启动前获取，不一定是真实的代理服务器ip，比如中转节点
@@ -1506,16 +1465,6 @@ get_proxy_server_ip(){
 		# ss服务器可能是域名且没有正确解析
 		ss_real_server_ip=""
 	fi
-}
-
-start_ssr_local() {
-	if [ -n "$(ps|grep rss-local|grep 23456)" ];then
-		return
-	fi
-
-	echo_date "开启ssr-local，提供socks5代理端口：23456"
-	run_bg rss-local -b 127.0.0.1 -l 23456 -c ${CONFIG_FILE} -u -f /var/run/ssrlocal.pid
-	detect_running_status rss-local "/var/run/ssrlocal.pid"
 }
 
 dbus_dset(){
@@ -3350,41 +3299,6 @@ create_dnsmasq_conf() {
 auto_start() {
 	[ ! -L "/koolshare/init.d/S99shadowsocks.sh" ] && ln -sf /koolshare/ss/ssconfig.sh /koolshare/init.d/S99shadowsocks.sh
 	[ ! -L "/koolshare/init.d/N99shadowsocks.sh" ] && ln -sf /koolshare/ss/ssconfig.sh /koolshare/init.d/N99shadowsocks.sh
-}
-
-start_ssr_redir() {
-	echo_date "开启ssr-redir进程，用于透明代理."
-	BIN=rss-redir
-	ARG_OBFS=""
-	if [ "${mangle}" == "1" ]; then
-		# tcp udp go ss
-		echo_date "${BIN}的 tcp 走${BIN}."
-		echo_date "${BIN}的 udp 走${BIN}."
-		fire_redir "rss-redir -c ${CONFIG_FILE} -u"
-	else
-		# tcp only go ss
-		echo_date "${BIN}的 tcp 走${BIN}."
-		echo_date "${BIN}的 udp 未开启."
-		fire_redir "rss-redir -c ${CONFIG_FILE}"
-	fi
-	echo_date "${BIN} 启动完毕！"
-
-	# start socks5，socks5端口默认提供，但目前监听在127.0.0.1，所有协议都需要开socks5端口，以前适用于dns tcp远程解析，未来用户开放给用户
-	start_ssr_local
-}
-
-fire_redir() {
-	local ARG_1 ARG_2 ARG_3
-	if [ "$ss_basic_mcore" == "1" -a "${LINUX_VER}" != "26" ]; then
-		echo_date "$BIN开启$THREAD线程支持."
-		local i=1
-		while [ $i -le $THREAD ]; do
-			run_bg $1 $ARG_1 $ARG_2 $ARG_3 -f /var/run/ssr_$i.pid
-			let i++
-		done
-	else
-		run_bg $1 -f /var/run/ssr.pid
-	fi
 }
 
 get_path_empty() {
@@ -5256,7 +5170,7 @@ kill_cron_job() {
 		sed -i '/ssnodeupdate/d' /var/spool/cron/crontabs/* >/dev/null 2>&1
 	fi
 	if [ -n "$(cru l | grep sslatencyjob)" ]; then
-		echo_date 删除SSR定时订阅任务...
+		echo_date 删除节点定时订阅任务...
 		sed -i '/sslatencyjob/d' /var/spool/cron/crontabs/* >/dev/null 2>&1
 	fi
 }
@@ -7230,7 +7144,6 @@ apply_ss() {
 		creat_shunt_json
 	else
 		[ "${ss_basic_type}" == "0" ] && creat_xray_ss_json
-		[ "${ss_basic_type}" == "1" ] && creat_ssr_json
 		[ "${ss_basic_type}" == "3" ] && creat_vmess_json
 		[ "${ss_basic_type}" == "4" ] && creat_vless_json
 		[ "${ss_basic_type}" == "5" ] && creat_trojan_json
@@ -7261,7 +7174,6 @@ apply_ss() {
 		fi
 	else
 		[ "${ss_basic_type}" == "0" ] && start_xray
-		[ "${ss_basic_type}" == "1" ] && start_ssr_redir
 		[ "${ss_basic_type}" == "3" ] && start_xray
 		[ "${ss_basic_type}" == "4" ] && start_xray
 		[ "${ss_basic_type}" == "5" ] && start_trojan

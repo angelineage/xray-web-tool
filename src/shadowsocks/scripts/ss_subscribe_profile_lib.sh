@@ -241,7 +241,7 @@ subprof_build_legacy_payload_json() {
 		--arg id "${profile_id}" \
 		--arg name "${profile_name}" \
 		--arg url "${profile_url}" \
-		--arg subscribe_mode "$(dbus get ssr_subscribe_mode)" \
+		--arg subscribe_mode "$(dbus get ss_basic_subscribe_mode)" \
 		--arg download_policy "${download_policy}" \
 		--arg ua_preset "${ua_preset}" \
 		--arg exclude "$(dbus get ss_basic_exclude)" \

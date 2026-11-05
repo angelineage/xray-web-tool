@@ -500,7 +500,7 @@ function LoadingSSProgress(seconds) {
 		document.getElementById("loading_block3").innerHTML = "应用负载均衡设置 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，应用负载均衡设置 ...</font></li>");
 	} else if (action == 13) {
-		document.getElementById("loading_block3").innerHTML = "SSR节点订阅 ..."
+		document.getElementById("loading_block3").innerHTML = "节点订阅 ..."
 		$("#loading_block2").html("<li><font color='#ffcc00'>请勿刷新本页面，正在订阅中 ...</font></li>");
 	} else if (action == 14) {
 		document.getElementById("loading_block3").innerHTML = "socks5代理设置 ..."
@@ -628,11 +628,6 @@ function openssHint(itemNum, flag) {
 		statusmenu += "&nbsp;&nbsp;&nbsp;&nbsp;提供给国外的朋友，通过在中间服务器翻回来，以享受一些视频、音乐等网络服务。<br />"
 		statusmenu += "<b><font color='#669900'>提示：</font></b>回国模式选择外国DNS只能使用直连~<br />"
 		_caption = "模式说明";
-	} else if (itemNum == 11) {
-		statusmenu = "如果不知道如何填写，请一定留空，不然可能带来副作用！"
-		statusmenu += "<br /><br />请参考<a class='hintstyle' href='javascript:void(0);' onclick='openssHint(8)'><font color='#00F'>协议插件（protocol）</font></a>和<a class='hintstyle' href='javascript:void(0);' onclick='openssHint(9)'><font color='#00F'>混淆插件 (obfs)</font></a>内说明。"
-		statusmenu += "<br /><br />更多信息，请参考<a href='https://github.com/koolshare/shadowsocks-rss/blob/master/ssr.md' target='_blank'><u><font color='#00F'>ShadowsocksR 协议插件文档</font></u></a>"
-		_caption = "自定义参数 (obfs_param)";
 	} else if (itemNum == 24) {
 		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;导出功能可以将ss所有的设置全部导出，包括节点信息，dns设定，黑白名单设定等；"
 		statusmenu += "<br />&nbsp;&nbsp;&nbsp;&nbsp;恢复配置功能可以使用之前导出的文件，也可以使用标准的json格式节点文件。"
@@ -642,7 +637,7 @@ function openssHint(itemNum, flag) {
 		statusmenu += "<br />&nbsp;&nbsp;&nbsp;&nbsp;此方式只支持vmess作为传出协议，不支持socks，shadowsocks，vless；提交后会根据你的配置自动生成v2ray的json配置。"
 		statusmenu += "<br /><br /><font color='#CC0066'><b>3:勾选（自定义json）：</b></font>"
 		statusmenu += "<br />&nbsp;&nbsp;&nbsp;&nbsp;此方式支持配置v2ray支持的所有传出协议，包括vmess、vless、socks，shadowsocks等，插件会取你的json的outbound/outbounds部分，并自动配置透明代理和socks传进协议，以便在路由器上工作。"
-		statusmenu += "<br />&nbsp;&nbsp;&nbsp;&nbsp;如果使用Xray作为核心【附加功能处启用】，v2ray json配置方式还可以配置仅xray支持的协议，比如vless-tcp + xtls。"
+		statusmenu += "<br />&nbsp;&nbsp;&nbsp;&nbsp;VMess、VLESS 等节点使用 Xray 核心；JSON 配置以当前 Xray 核心支持的配置格式为准。"
 		_caption = "使用json配置";
 	} else if (itemNum == 31) {
 		width = "400px";
@@ -728,9 +723,6 @@ function openssHint(itemNum, flag) {
 		width = "750px";
 		statusmenu = "<br />此参数在客户端json配置文件的【outbound/outbounds → settings → vnext → users → id】位置<br /><br />"
 		_caption = "用户id (id)";
-	} else if (itemNum == 54) {
-		statusmenu = "更多信息，请参考<a href='https://breakwa11.blogspot.jp/2017/01/shadowsocksr-mu.html' target='_blank'><u><font color='#00F'>ShadowsocksR 协议参数文档</font></u></a>"
-		_caption = "协议参数（protocol）";
 	} else if (itemNum == 55) {
 		width = "750px";
 		statusmenu = "<br />此参数在客户端json配置文件的【outbound/outbounds → settings → vnext → users → encryption】位置<br /><br />此参数仅用于Xray的VLESS协议，不过目前VLESS没有自带加密。所以目前都设置为none，请用于可靠信道，如 TLS。<br /><br />参考文档：<a href='https://xtls.github.io/config/outbounds/vless.html#outboundconfigurationobject' target='_blank'><font color='#00F'><u>https://xtls.github.io/config/outbounds/vless.html#outboundconfigurationobject</u></font></a>"
@@ -772,13 +764,11 @@ function openssHint(itemNum, flag) {
 		statusmenu += "<br /><br />&nbsp;&nbsp;&nbsp;&nbsp;<font color='#CC0066'>2.</font>一些机场节点的域名托管在国外服务商，此时使用国外的DNS服务器效果可能更好。";
 		_caption = "节点域名解析DNS服务器：";
 	} else if (itemNum == 108) {
-		statusmenu = "ss/ssr/trojan多核心支持.<br />&nbsp;&nbsp;&nbsp;&nbsp;开启后ss-redir/rss-redir/trojan将同时运行在路由器的全部核心上，最大化ss-redir/rss-redir/trojan的性能。注意：如果线路速度不存在瓶颈，可能使CPU全部核心满载，影响路由的稳定性。"
-		_caption = "ss/ssr/trojan多核心支持：";
 	} else if (itemNum == 110) {
-		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;匹配节点名称和节点域名/IP，含关键词的节点不会添加，多个关键词用<font color='#00F'>英文逗号</font>分隔，关键词支持中文、英文、数字，如：<font color='#CC0066'>测试,过期,剩余,曼谷,M247,D01,硅谷</font><br />&nbsp;&nbsp;&nbsp;&nbsp;此功能支持SS/SSR/V2ray/Xray订阅，<font color='#00F'>[排除]关键词</font>功能和<font color='#00F'>[包括]关键词</font>功能同时起作用。"
+		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;匹配节点名称和节点域名/IP，含关键词的节点不会添加，多个关键词用<font color='#00F'>英文逗号</font>分隔，关键词支持中文、英文、数字，如：<font color='#CC0066'>测试,过期,剩余,曼谷,M247,D01,硅谷</font><br />&nbsp;&nbsp;&nbsp;&nbsp;此功能支持Shadowsocks/VMess/VLESS/Trojan/Hysteria2订阅，<font color='#00F'>[排除]关键词</font>功能和<font color='#00F'>[包括]关键词</font>功能同时起作用。"
 		_caption = "[排除]关键词：";
 	} else if (itemNum == 111) {
-		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;匹配节点名称和节点域名/IP，含关键词的节点才会添加，多个关键词用<font color='#00F'>英文逗号</font>分隔，关键词支持中文、英文、数字，如：<font color='#CC0066'>香港,深圳,NF,BGP</font><br />&nbsp;&nbsp;&nbsp;&nbsp;此功能支持SS/SSR/V2ray/Xray订阅，<font color='#00F'>[排除]关键词</font>功能和<font color='#00F'>[包括]关键词</font>功能同时起作用。"
+		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;匹配节点名称和节点域名/IP，含关键词的节点才会添加，多个关键词用<font color='#00F'>英文逗号</font>分隔，关键词支持中文、英文、数字，如：<font color='#CC0066'>香港,深圳,NF,BGP</font><br />&nbsp;&nbsp;&nbsp;&nbsp;此功能支持Shadowsocks/VMess/VLESS/Trojan/Hysteria2订阅，<font color='#00F'>[排除]关键词</font>功能和<font color='#00F'>[包括]关键词</font>功能同时起作用。"
 		_caption = "[包括]关键词：";
 	} else if (itemNum == 112) {
 		statusmenu = "&nbsp;&nbsp;&nbsp;&nbsp;一些机场需要特定的UA才能获得通用订阅，如果你使用默认订阅无法获得正确的而节点，可以尝试切换不同的UA来进行订阅！";

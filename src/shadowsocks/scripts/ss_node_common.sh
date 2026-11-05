@@ -1335,15 +1335,6 @@ fss_prune_node_json() {
 				or $k == "password"
 				or $k == "ss_obfs"
 				or $k == "ss_obfs_host"
-			elif $type == "1" then
-				$k == "server"
-				or $k == "port"
-				or $k == "method"
-				or $k == "password"
-				or $k == "rss_protocol"
-				or $k == "rss_protocol_param"
-				or $k == "rss_obfs"
-				or $k == "rss_obfs_param"
 			elif $type == "3" then
 				$k == "server"
 				or $k == "port"
@@ -1446,6 +1437,7 @@ fss_prune_node_json() {
 			end;
 		. as $root
 		| (($root.type // "") | tostring) as $type
+		| if $type == "1" then error("unsupported node protocol") else . end
 		| with_entries(select((.key | startswith("_")) or keep_common(.key) or keep_type($type; .key)))
 	'
 }
@@ -1784,7 +1776,7 @@ fss_validate_v2_tempdir() {
 	do
 		[ -z "${node_id}" ] && continue
 		[ -s "${tmp_dir}/node_${node_id}.json" ] || return 1
-		jq -e --arg id "${node_id}" '._schema == 2 and ._id == $id' "${tmp_dir}/node_${node_id}.json" >/dev/null 2>&1 || return 1
+		jq -e --arg id "${node_id}" '._schema == 2 and ._id == $id and ((.type | tostring) != "1")' "${tmp_dir}/node_${node_id}.json" >/dev/null 2>&1 || return 1
 		[ -s "${tmp_dir}/node_${node_id}.b64" ] || return 1
 	done < "${tmp_dir}/order"
 
@@ -2170,8 +2162,6 @@ fss_legacy_node_dump_to_v2_tsv() {
 		def keep_type($type; $k):
 			if $type == "0" then
 				$k == "server" or $k == "port" or $k == "method" or $k == "password" or $k == "ss_obfs" or $k == "ss_obfs_host"
-			elif $type == "1" then
-				$k == "server" or $k == "port" or $k == "method" or $k == "password" or $k == "rss_protocol" or $k == "rss_protocol_param" or $k == "rss_obfs" or $k == "rss_obfs_param"
 			elif $type == "3" then
 				$k == "server" or $k == "port" or $k == "v2ray_uuid" or $k == "v2ray_alterid" or $k == "v2ray_security" or $k == "v2ray_network" or $k == "v2ray_headtype_tcp" or $k == "v2ray_headtype_kcp" or $k == "v2ray_kcp_seed" or $k == "v2ray_headtype_quic" or $k == "v2ray_grpc_mode" or $k == "v2ray_grpc_authority" or $k == "v2ray_network_path" or $k == "v2ray_network_host" or $k == "v2ray_network_security" or $k == "v2ray_network_security_ai" or $k == "v2ray_network_security_alpn_h2" or $k == "v2ray_network_security_alpn_http" or $k == "v2ray_network_security_sni" or $k == "v2ray_mux_concurrency" or $k == "v2ray_json" or $k == "v2ray_use_json" or $k == "v2ray_mux_enable"
 			elif $type == "4" then
@@ -2212,9 +2202,6 @@ fss_legacy_node_dump_to_v2_tsv() {
 			| .mode = (if ((.mode // "") == "") then "2" else .mode end)
 			| if $type == "0" then
 				.ss_obfs = (if ((.ss_obfs // "") == "") then "0" else .ss_obfs end)
-			elif $type == "1" then
-				.rss_protocol = (if ((.rss_protocol // "") == "") then "origin" else .rss_protocol end)
-				| .rss_obfs = (if ((.rss_obfs // "") == "") then "plain" else .rss_obfs end)
 			elif $type == "3" then
 				.v2ray_alterid = (if ((.v2ray_alterid // "") == "") then "0" else .v2ray_alterid end)
 				| .v2ray_security = (if ((.v2ray_security // "") == "") then "auto" else .v2ray_security end)
@@ -2379,9 +2366,6 @@ fss_node_legacy_to_v2_json() {
 			| .mode = (if ((.mode // "") == "") then "2" else .mode end)
 			| if $type == "0" then
 				.ss_obfs = (if ((.ss_obfs // "") == "") then "0" else .ss_obfs end)
-			elif $type == "1" then
-				.rss_protocol = (if ((.rss_protocol // "") == "") then "origin" else .rss_protocol end)
-				| .rss_obfs = (if ((.rss_obfs // "") == "") then "plain" else .rss_obfs end)
 			elif $type == "3" then
 				.v2ray_alterid = (if ((.v2ray_alterid // "") == "") then "0" else .v2ray_alterid end)
 				| .v2ray_security = (if ((.v2ray_security // "") == "") then "auto" else .v2ray_security end)
@@ -4151,6 +4135,7 @@ fss_restore_native_backup_to_legacy() {
 	[ -f "${json_file}" ] || return 1
 	[ -z "${script_file}" ] && return 1
 	jq -e '.format == "fancyss-backup" and (.schema_version | tostring) == "2"' "${json_file}" >/dev/null 2>&1 || return 1
+	jq -e 'all(.nodes[]?; (.type | tostring) != "1")' "${json_file}" >/dev/null 2>&1 || { echo_date "备份包含已移除的节点协议，未修改现有配置。"; return 1; }
 
 	cat > "${script_file}" <<-EOF
 #!/bin/sh
@@ -4381,6 +4366,7 @@ fss_restore_native_backup_v2() {
 
 	[ -f "${json_file}" ] || return 1
 	jq -e '.format == "fancyss-backup" and (.schema_version | tostring) == "2"' "${json_file}" >/dev/null 2>&1 || return 1
+	jq -e 'all(.nodes[]?; (.type | tostring) != "1")' "${json_file}" >/dev/null 2>&1 || { echo_date "备份包含已移除的节点协议，未修改现有配置。"; return 1; }
 
 	tmp_dir=$(fss_mktemp_dir fss_restore) || return 1
 	node_order_file="${tmp_dir}/order"
@@ -4464,8 +4450,6 @@ fss_restore_native_backup_v2() {
 			def keep_type($type; $k):
 				if $type == "0" then
 					$k == "server" or $k == "port" or $k == "method" or $k == "password" or $k == "ss_obfs" or $k == "ss_obfs_host"
-				elif $type == "1" then
-					$k == "server" or $k == "port" or $k == "method" or $k == "password" or $k == "rss_protocol" or $k == "rss_protocol_param" or $k == "rss_obfs" or $k == "rss_obfs_param"
 				elif $type == "3" then
 					$k == "server" or $k == "port" or $k == "v2ray_uuid" or $k == "v2ray_alterid" or $k == "v2ray_security" or $k == "v2ray_network" or $k == "v2ray_headtype_tcp" or $k == "v2ray_headtype_kcp" or $k == "v2ray_kcp_seed" or $k == "v2ray_headtype_quic" or $k == "v2ray_grpc_mode" or $k == "v2ray_grpc_authority" or $k == "v2ray_network_path" or $k == "v2ray_network_host" or $k == "v2ray_network_security" or $k == "v2ray_network_security_ai" or $k == "v2ray_network_security_alpn_h2" or $k == "v2ray_network_security_alpn_http" or $k == "v2ray_network_security_sni" or $k == "v2ray_mux_concurrency" or $k == "v2ray_json" or $k == "v2ray_use_json" or $k == "v2ray_mux_enable"
 				elif $type == "4" then

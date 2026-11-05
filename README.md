@@ -93,4 +93,6 @@ sh /tmp/fancyss_ac3100_review_v010/run.sh
 
 本分支不承诺其他机型、架构、固件及未实测协议的兼容性。
 
-运行状态页默认打开，每 5 秒读取当前节点、Xray CPU/RSS 和代理出站流量。直连流量不计入代理统计；计数自核心重启开始。使用仅监听本机的 Metrics 接口，切离或隐藏页面后停止采样。
+运行状态页默认打开，每 1 秒读取当前节点、Xray CPU/RSS 和代理出站流量。直连流量不计入代理统计；计数自核心重启开始。使用仅监听本机的 Metrics 接口，切离或隐藏页面后停止采样。
+
+支持协议：Shadowsocks、VMess、VLESS、Trojan、Hysteria2，均使用 Xray 核心；Shadowsocks 的部分混淆方式使用 obfs-local 辅助。SSR 已移除，含 SSR 节点的配置备份会在写入前拒绝恢复，混合订阅中的 SSR 链接会跳过。

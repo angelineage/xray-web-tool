@@ -71,15 +71,8 @@ GET_PROXY_TOOL(){
 	0)
 		echo "xray-core"
 		;;
-	1)
-		echo "shadowsocksR"
-		;;
 	3)
-		if [ "${ss_basic_vcore}"  == "1" ];then
-			echo "xray-core"
-		else
-			echo "v2ray-core"
-		fi
+		echo "xray-core"
 		;;
 	4)
 		echo "xray-core"
@@ -106,9 +99,6 @@ GET_TYPE_NAME(){
 	case "$1" in
 	0)
 		echo "SS"
-		;;
-	1)
-		echo "SSR"
 		;;
 	3)
 		echo "v2ray"
@@ -141,9 +131,6 @@ GET_TYPE_DIST_NAME(){
 	case "$1" in
 	0)
 		echo "ss"
-		;;
-	1)
-		echo "ssr"
 		;;
 	3)
 		echo "vmess"
@@ -572,17 +559,7 @@ GET_PROG_STAT(){
 	echo "程序		状态		作用		PID		内存		运行时长"
 
 	# proxy core program
-if [ "${current_type}" == "1" ]; then
-		# ssr
-		local SSR_REDIR_PID=$(pidof rss-redir)
-		local SSR_REDIR_RSS=$(GET_VM_RSS_MULTI ${SSR_REDIR_PID})
-		local SSR_REDIR_UPTIME=$(GET_PROC_UPTIME_MULTI ${SSR_REDIR_PID})
-		if [ -n "${SSR_REDIR_PID}" ];then
-			echo "ssr-redir	运行中🟢		透明代理		${SSR_REDIR_PID}		${SSR_REDIR_RSS}		${SSR_REDIR_UPTIME}"
-		else
-			echo "ssr-redir	未运行🔴		透明代理"
-		fi
-	elif [ "${current_type}" == "0" -o "${current_type}" == "3" -o "${current_type}" == "4" -o "${current_type}" == "5" -o "${current_type}" == "8" ]; then
+	if [ "${current_type}" == "0" -o "${current_type}" == "3" -o "${current_type}" == "4" -o "${current_type}" == "5" -o "${current_type}" == "8" ]; then
 		# xray
 		local XRAY_PID=$(pidof xray)
 		local XRAY_RSS=$(GET_VM_RSS_MULTI ${XRAY_PID})
@@ -764,8 +741,6 @@ ECHO_VERSION(){
 		fi
 	fi
 	printf '%-16s %-16s %s\n' "obfs-local" "$(run obfs-local -h|sed '/^$/d'|head -n1|awk '{print $NF}')" "https://github.com/shadowsocks/simple-obfs"
-	printf '%-16s %-16s %s\n' "ssr-redir" "$(run rss-redir -h|sed '/^$/d'|head -n1|awk '{print $2}')" "https://github.com/shadowsocksrr/shadowsocksr-libev"
-	printf '%-16s %-16s %s\n' "ssr-local" "$(run rss-local -h|sed '/^$/d'|head -n1|awk '{print $2}')" "https://github.com/shadowsocksrr/shadowsocksr-libev"
 	if [ -x "/koolshare/bin/chinadns-ng" ];then
 		printf '%-16s %-16s %s\n' "chinadns-ng" "$(run chinadns-ng -V | awk '{print $2}')" "https://github.com/zfl9/chinadns-ng"
 	fi

@@ -616,7 +616,6 @@ wt_webtest_group_label() {
 	nv) printf '%s\n' "naive" ;;
 	tc) printf '%s\n' "tuic" ;;
 	09) printf '%s\n' "anytls" ;;
-	01|single) printf '%s\n' "ssr" ;;
 	*) printf '%s\n' "$1" ;;
 	esac
 }
@@ -1403,7 +1402,6 @@ wt_runtime_cleanup() {
 	killall wt-ss >/dev/null 2>&1
 	killall wt-ss-local >/dev/null 2>&1
 	killall wt-obfs >/dev/null 2>&1
-	killall wt-rss-local >/dev/null 2>&1
 	killall wt-v2ray >/dev/null 2>&1
 	killall wt-xray >/dev/null 2>&1
 	killall wt-trojan >/dev/null 2>&1
@@ -1606,7 +1604,6 @@ wt_apply_perf_profile() {
 
 	WT_LOW_END=1
 	WT_XRAY_THREADS=12
-	WT_SSR_THREADS=1
 	WT_TUIC_THREADS=1
 	WT_NAIVE_THREADS=1
 	WT_ANYTLS_THREADS=1
@@ -1616,7 +1613,6 @@ wt_apply_perf_profile() {
 	aarch64_3plus_2g)
 		WT_LOW_END=0
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=4
 		WT_TUIC_THREADS=3
 		WT_NAIVE_THREADS=3
 		WT_ANYTLS_THREADS=3
@@ -1625,7 +1621,6 @@ wt_apply_perf_profile() {
 	aarch64_3plus_1g)
 		WT_LOW_END=0
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=4
 		WT_TUIC_THREADS=2
 		WT_NAIVE_THREADS=2
 		WT_ANYTLS_THREADS=2
@@ -1634,7 +1629,6 @@ wt_apply_perf_profile() {
 	aarch64_3plus_512m)
 		WT_LOW_END=1
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=2
 		WT_TUIC_THREADS=1
 		WT_NAIVE_THREADS=1
 		WT_ANYTLS_THREADS=1
@@ -1643,7 +1637,6 @@ wt_apply_perf_profile() {
 	aarch64_dual_core)
 		WT_LOW_END=1
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=2
 		WT_TUIC_THREADS=1
 		WT_NAIVE_THREADS=1
 		WT_ANYTLS_THREADS=1
@@ -1652,7 +1645,6 @@ wt_apply_perf_profile() {
 	armv7l_rt_ax89x)
 		WT_LOW_END=0
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=2
 		WT_TUIC_THREADS=2
 		WT_NAIVE_THREADS=2
 		WT_ANYTLS_THREADS=2
@@ -1661,7 +1653,6 @@ wt_apply_perf_profile() {
 	armv7l_quad_core_1g)
 		WT_LOW_END=1
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=2
 		WT_TUIC_THREADS=2
 		WT_NAIVE_THREADS=2
 		WT_ANYTLS_THREADS=2
@@ -1670,7 +1661,6 @@ wt_apply_perf_profile() {
 	armv7l_quad_core_512m)
 		WT_LOW_END=1
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=1
 		WT_TUIC_THREADS=1
 		WT_NAIVE_THREADS=1
 		WT_ANYTLS_THREADS=1
@@ -1679,7 +1669,6 @@ wt_apply_perf_profile() {
 	armv7l_tri_core)
 		WT_LOW_END=1
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=1
 		WT_TUIC_THREADS=1
 		WT_NAIVE_THREADS=1
 		WT_ANYTLS_THREADS=1
@@ -1688,7 +1677,6 @@ wt_apply_perf_profile() {
 	armv7l_low_end|generic_low_end|*)
 		WT_LOW_END=1
 		WT_XRAY_THREADS=12
-		WT_SSR_THREADS=1
 		WT_TUIC_THREADS=1
 		WT_NAIVE_THREADS=1
 		WT_ANYTLS_THREADS=1
@@ -2122,9 +2110,6 @@ wt_group_preview_count() {
 		else
 			printf '%s\n' "${WT_XRAY_THREADS:-1}"
 		fi
-		;;
-	01)
-		printf '%s\n' "${WT_SSR_THREADS:-1}"
 		;;
 	06|07|09)
 		printf '%s\n' 9999
@@ -2963,20 +2948,19 @@ get_webtest_usable_count(){
 # ----------------------------------------------------------------------
 # webtest
 # 0: ss: ss, ss + simpple obfs, ss + v2ray plugin
-# 1: ssr
 # 3: v2ray
 # 4: xray
 # 5: trojan
 # 6: naive
 
-# 1. 先分类，ss分4类（ss, ss+simple, ss+v2ray, ss2022），ssr一类，v2ray + xray + trojan一类，naive一类，总共7类
+# 1. 先分类，ss分4类（ss, ss+simple, ss+v2ray, ss2022），v2ray + xray + trojan一类，naive一类，总共7类
 # 2. 按照类别分别进行测试，而不是按照节点顺序测试，这样可以避免v2ray，xray等线程过多导致路由器资源耗尽，每个类的线程数不一样
 # 3. 每个类别的测试，不同机型给到不同的线程数量，比如RT-AX56U_V2这种小内存机器，给一个线程即可
 # 4. ss测试需要判断加密方式是否为2022AEAD，如果是，则需要判断是否存在sslocal，（不存在则返回不支持）
 # 4. ss测试需要判断是否启用了插件，如果是v2ray-plugin插件，则测试线程应该降低，fancyss_lite不测试（返回不支持）
 # 5. v2ray的配置文件（一般为vmess）由xray进行测试，因为fancyss_lite不带v2ray二进制
 # 6. 二进制启动目标为开socks5端口，然后用curl通过该端口进行落地延迟测试
-# 7. ss ssr这类以开多个二进制来增加线程，xray测试则使用一个线程 + 开多个socks5端口的配置文件来进行测试
+# 7. 独立代理核心以开多个二进制来增加线程，xray测试则使用一个线程 + 开多个socks5端口的配置文件来进行测试
 # 8. 运行测试的时候，需要将各个二进制改名后运行，以免ssconfig.sh的启停将某个测试进程杀掉
 
 webtest_web(){
@@ -3180,9 +3164,6 @@ test_nodes(){
 				xray_group_done=1
 			fi
 			;;
-		01)
-			test_07_sr $file_name $node_type
-			;;
 		06)
 			test_11_nv $file_name $node_type
 			;;
@@ -3271,89 +3252,6 @@ test_xray_group(){
 	wt_mark_failed_from_nodes_file "${valid_nodes_file}"
 	wt_cleanup_xray_group_runtime "${xray_pid}"
 	return 0
-}
-
-test_07_sr(){
-	local file=$1
-	local mark=$2
-	local file_path=""
-	local max_threads=""
-	local targets_file="${TMP2}/targets_${mark}.table"
-	local hooks_dir="${TMP2}/hooks_${mark}"
-	local pid_file=""
-	local start_script=""
-	local stop_script=""
-	local socks5_port=""
-	local json_file=""
-	local valid_nodes_file="${TMP2}/targets_${mark}.nodes"
-	local _server_ip=""
-
-	case "${file}" in
-	/*)
-		file_path="${file}"
-		;;
-	*)
-		file_path="${TMP2}/${file}"
-		;;
-	esac
-	[ -f "${file_path}" ] || return 0
-	wt_prepare_node_env_cache >/dev/null 2>&1 || true
-	max_threads="${WT_SSR_THREADS}"
-	[ -n "${max_threads}" ] || max_threads=1
-	wt_set_batch_state_from_file "${file_path}" "loading..." ""
-	
-	# alisa binary
-	killall wt-rss-local >/dev/null 2>&1
-	ln -sf /koolshare/bin/rss-local ${TMP2}/wt-rss-local
-	mkdir -p ${TMP2}/conf_${mark}
-	rm -rf ${TMP2}/conf_${mark}/*
-	wt_prepare_protocol_targets_workspace "${targets_file}" "${valid_nodes_file}" "${hooks_dir}" || return 1
-	while read -r nu
-	do
-		[ -n "${nu}" ] || continue
-		_server_ip=$(_get_server_ip "$(wt_node_get server ${nu})")
-		if [ -z "${_server_ip}" ];then
-			_server_ip=$(wt_node_get server ${nu})
-		fi
-		socks5_port=$(wt_get_reserved_port)
-		[ -n "${socks5_port}" ] || {
-			echo -en "${nu}>failed\n" >>${TMP2}/results/${nu}.txt
-			wt_append_webtest_file "${TMP2}/results/${nu}.txt"
-			continue
-		}
-		json_file="${TMP2}/conf_${mark}/${nu}.json"
-		cat >"${json_file}" <<-EOF
-			{
-			    "server":"${_server_ip}",
-			    "server_port":$(wt_node_get port ${nu}),
-			    "local_address":"0.0.0.0",
-			    "local_port":${socks5_port},
-			    "password":"$(wt_node_get password ${nu} | base64_decode)",
-			    "timeout":600,
-			    "protocol":"$(wt_node_get rss_protocol ${nu})",
-			    "protocol_param":"$(wt_node_get rss_protocol_param ${nu})",
-			    "obfs":"$(wt_node_get rss_obfs ${nu})",
-			    "obfs_param":"$(wt_node_get rss_obfs_param ${nu})",
-			    "method":"$(wt_node_get method ${nu})"
-			}
-		EOF
-		pid_file="${TMP2}/pids/rss_${nu}.pid"
-		start_script="${hooks_dir}/${nu}.start.sh"
-		stop_script="${hooks_dir}/${nu}.stop.sh"
-		wt_write_pid_hook_scripts "${start_script}" "${stop_script}" "${pid_file}" "\"${TMP2}/wt-rss-local\" -c \"${json_file}\" -f \"${pid_file}\"" || continue
-		wt_append_protocol_target_row "${targets_file}" "${valid_nodes_file}" "${nu}" "${socks5_port}" "${start_script}" "${stop_script}" "${socks5_port}" "5000" || continue
-	done < "${file_path}"
-	[ -s "${targets_file}" ] || return 0
-	wt_set_batch_state_from_file "${valid_nodes_file}" "booting..." ""
-	if wt_try_webtest_tool_targets_batch "${targets_file}" "${mark}" "${max_threads}"; then
-		killall wt-rss-local >/dev/null 2>&1
-		rm -rf "${hooks_dir}" ${TMP2}/wt-rss-local
-		return 0
-	fi
-
-	wt_mark_failed_from_nodes_file "${valid_nodes_file}"
-	killall wt-rss-local >/dev/null 2>&1
-	rm -rf "${hooks_dir}" ${TMP2}/wt-rss-local
 }
 
 test_11_nv(){
@@ -3730,7 +3628,6 @@ single_test_node(){
 	WT_WEBTEST_STATE_FILE="${TMP2}/webtest.single.state"
 	detect_perf
 	WT_XRAY_THREADS=1
-	WT_SSR_THREADS=1
 	WT_TUIC_THREADS=1
 	WT_NAIVE_THREADS=1
 	WT_ANYTLS_THREADS=1
@@ -3759,9 +3656,6 @@ single_test_node(){
 	case ${node_type} in
 	0|3|4|5|8)
 		test_xray_group ${single_file} xg
-		;;
-	1)
-		test_07_sr ${single_file} single
 		;;
 	6)
 		test_11_nv ${single_file}

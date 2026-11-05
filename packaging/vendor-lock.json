@@ -1,5 +1,4 @@
 {
-  "shadowsocks/bin/rss-local": "91017a03d6ff6680f87cd0a7e434358b9e4473a8b9e5e3c417499ed96fe69c2b",
   "shadowsocks/bin/sponge": "a6433a9ed7a0f63469152ed8bbf829774f937cccc37b830290ecf0d5cdeaeb4a",
   "shadowsocks/bin/obfs-local": "a97a68686112e11b3d929d4e9703f61de5be8c9501534e400d2d983053214bd3",
   "shadowsocks/bin/smartdns": "7cb3b7b90a2c4f3f8224e43a12e71a72f3dbadf09f5db55708ef2a81815d739e",
@@ -11,7 +10,6 @@
   "shadowsocks/bin/websocketd": "f7b5fb023668e4a6e24bb63769c9ccd29b2298cf1db36e18037982c51e8477bf",
   "shadowsocks/bin/webtest-tool": "96177bfd20445b458bea75efabea1d4639c6de2a7c4106d8a2ce811bd7c2fb71",
   "shadowsocks/bin/status-tool": "3c5626708f72d20484ae627b399cab3f6c700de912e1942a4f635c43078420c0",
-  "shadowsocks/bin/rss-redir": "535de614e2364d4ba444f27d6fad7a57387e5abce31059efc5262857402a4e83",
   "shadowsocks/bin/isutf8": "22caaa3ae624fad34e5745ad046bcd318ae8e7a78bd074c8ee31c81143947045",
   "shadowsocks/bin/node-tool": "7e2e800bd90379c36c5c93f8922807fb9dfaa2876cee58c8a7c9087b25fbb848",
   "shadowsocks/bin/curl-fancyss": "471160a60229cb5e1ec1943df6700d543074a3b37741a3963db50b16ebcc91b3",

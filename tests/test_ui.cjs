@@ -91,3 +91,17 @@ for(const tag of ['v0.1.3','v0.1.2','unavailable']){releaseRequests[0].success({
 releaseRequests[0].error();releaseCtx.check_release_once();assert.equal(releaseRequests.length,1);
 assert.match(html,/11: function\(\).*check_release_once\(\)/);
 console.log('Release checks passed: one check per page, separate version, upgrade comparison and update action.');
+
+assert.doesNotMatch(html,/ssrTitle|rss_protocol|rss_obfs|shadowsocksR|proto-ssr/);
+const protocolContext={save_flag:'',applyNodeVisibility(){},E:id=>{assert.notEqual(id,'ssrTitle');return {};}};
+vm.createContext(protocolContext);vm.runInContext(html.slice(html.indexOf('function tabclickhandler('),html.indexOf('function add_ss_node_conf(')),protocolContext);
+for(const [type,flag] of [[0,'shadowsocks'],[3,'v2ray'],[4,'xray'],[5,'trojan'],[8,'hysteria2']])assert.equal(protocolContext.tabclickhandler(type),flag);
+const subscriptionScript=fs.readFileSync(root+'/scripts/ss_node_subscribe.sh','utf8');
+assert.doesNotMatch(subscriptionScript,/add_ssr_node|type_name="SSR"|supported\["ssr"\]/);
+assert.doesNotMatch(fs.readFileSync(root+'/ss/ssconfig.sh','utf8'),/start_ssr|creat_ssr_json|run_bg rss-/);
+console.log('Protocol checks passed: five editor tabs, no SSR fields or launchers.');
+
+vm.runInContext(html.slice(html.indexOf('function get_node_display_type_label('),html.indexOf('function get_node_display_source_label(')),protocolContext);
+for(const [node,label] of [[{type:'0'},'SS'],[{type:'3'},'VMess'],[{type:'4'},'VLESS'],[{type:'4',xray_prot:'vmess'},'VMess'],[{type:'5'},'Trojan'],[{type:'8'},'Hysteria2']])assert.equal(protocolContext.get_node_display_type_label(node),label);
+
+assert.doesNotMatch(fs.readFileSync(root+'/scripts/ss_webtest.sh','utf8'),/test_07_sr|WT_SSR_THREADS|wt-rss-local/);

@@ -51,9 +51,6 @@ __get_type_abbr_name() {
 		0)
 			echo "ss"
 		;;
-		1)
-			echo "ssr"
-		;;
 		2)
 			echo "koolgame"
 		;;

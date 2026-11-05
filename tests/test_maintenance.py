@@ -81,6 +81,9 @@ class BuildTests(unittest.TestCase):
                 self.assertEqual(archive.getmember('shadowsocks/scripts/ss_log.sh').mode, 0o755)
                 self.assertEqual(archive.extractfile('shadowsocks/ss/version').read().strip(), b'3.5.30')
                 self.assertIn('shadowsocks/LICENSE', archive.getnames())
+                self.assertNotIn('shadowsocks/bin/rss-local', archive.getnames())
+                self.assertNotIn('shadowsocks/bin/rss-redir', archive.getnames())
+                self.assertIn('shadowsocks/bin/xray', archive.getnames())
                 self.assertTrue(all(not n.startswith(('/', '../')) for n in archive.getnames()))
 
     def test_immutable_native_binaries(self):

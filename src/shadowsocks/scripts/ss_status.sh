@@ -33,7 +33,7 @@ PROXY_IPV6=$(dbus get ss_basic_proxy_ipv6)
 status_socks5_ready() {
 	netstat -nlp 2>/dev/null \
 		| grep -w "23456" \
-		| grep -Eq "xray|v2ray|naive|tuic|anytls-zig|rss-local"
+		| grep -Eq "xray|v2ray|naive|tuic|anytls-zig"
 }
 
 set_waiting_status(){

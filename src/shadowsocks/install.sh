@@ -1686,7 +1686,7 @@ install_now(){
 		echo_date "检测/data分区剩余空间..."
 		local SPACE_DATA_AVAL1=$(df | grep -w "/data" | awk '{print $4}')
 		echo_date "/data分区剩余空间为：${SPACE_DATA_AVAL1}KB"
-		local _BINS="xray v2ray hysteria2 naive anytls-zig sslocal rss-local rss-tunnel rss-redir"
+		local _BINS="xray v2ray hysteria2 naive anytls-zig sslocal"
 		for _BIN in ${_BINS}
 		do
 			if [ -f "/tmp/shadowsocks/bin/${_BIN}" ];then
@@ -1788,7 +1788,6 @@ install_now(){
 
 	# soft links
 	echo_date "创建一些二进制文件的软链接！"
-	[ ! -L "/koolshare/bin/rss-tunnel" ] && ln -sf /koolshare/bin/rss-local /koolshare/bin/rss-tunnel
 	[ ! -L "/koolshare/init.d/S99shadowsocks.sh" ] && ln -sf /koolshare/ss/ssconfig.sh /koolshare/init.d/S99shadowsocks.sh
 	[ ! -L "/koolshare/init.d/N99shadowsocks.sh" ] && ln -sf /koolshare/ss/ssconfig.sh /koolshare/init.d/N99shadowsocks.sh
 
