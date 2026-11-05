@@ -24,6 +24,8 @@ f=fixture();f.instance.start('plugin');f.requests[0].success({view:'subscribe',t
 f=fixture();f.instance.start('plugin');f.setActive(false);f.requests[0].success({view:'plugin',text:'hidden'});assert.equal(f.renders.length,0);assert.equal(f.timers.size,0);tests++;
 assert.equal(viewer.clean('text XU6J03M6 here\nXU6J03M6\nend'),'text XU6J03M6 here\nend');tests++;
 const html=fs.readFileSync(root+'/webs/Module_shadowsocks.asp','utf8');
+// Merlin httpd treats CSS query strings as part of the filename and returns 404.
+for(const link of html.matchAll(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi)){assert.doesNotMatch(link[0],/href=["'][^"']*\?/);tests++;}
 for(const block of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){if(!/src=/.test(block[1])){new vm.Script(block[2].replace(/<%[\s\S]*?%>/g,'0'));tests++;}}
 for(const file of ['ss-menu.js','ac3100-log-viewer.js']){new vm.Script(fs.readFileSync(root+'/res/'+file,'utf8'));tests++;}
 assert.doesNotMatch(html,/fancyss_msg\.json|ads_url_1|123s\.co|packages\/version\.json\.js/);tests++;
@@ -55,3 +57,11 @@ vm.createContext(operationCtx);vm.runInContext('String.prototype.myReplace=funct
 assert.equal(realtimeOptions.onSuccess({result:{operation:'old-operation',text:'old log\nXU6J03M6'}},{}).done,false);assert.equal(completed,0);tests++;
 assert.equal(realtimeOptions.onSuccess({result:{operation:'new-operation',text:'current log\nXU6J03M6'}},{}).done,true);assert.equal(completed,1);assert.match(operationFields.log_content3.value,/current log/);tests++;
 console.log(`${tests} UI checks passed: cancellation, stale results, retries, continued refresh, poller and syntax.`);
+
+// Exercise the actual router escaping command through stdin (Windows -c quoting differs).
+const statusShell=fs.readFileSync(root+'/scripts/ss_status.sh','utf8');
+const statusSed=statusShell.match(/http_response "\$\(printf '%s' "\$\{payload\}" \| (sed [^\n]+?)\)"/)[1];
+const statusText='foreign <font color="#FF0000">timeout</font>@@local 65 ms';
+const statusEscaped=require('child_process').execFileSync(process.platform==='win32'?'C:/Program Files/Git/bin/bash.exe':'bash',['-s'],{input:"printf '%s' '"+statusText+"' | "+statusSed+"\n",encoding:'utf8'});
+assert.equal(JSON.parse('{"result":"'+statusEscaped+'"}').result,statusText);
+console.log('Legacy status JSON escape check passed.');

@@ -17,7 +17,7 @@
 <link rel="stylesheet" type="text/css" href="/js/table/table.css">
 <link rel="stylesheet" type="text/css" href="/res/layer/theme/default/layer.css">
 <link rel="stylesheet" type="text/css" href="/res/softcenter.css">
-<link rel="stylesheet" type="text/css" href="/res/fancyss.css?v=dashboard-20261105">
+<link rel="stylesheet" type="text/css" href="/res/xwt-ui.css">
 <style type="text/css">
 .shunt-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px;padding:0 2px;}
 .shunt-summary-card,.shunt-rule-card,.shunt-fallback-card{position:relative;overflow:hidden;border:1px solid rgba(69,93,120,0.28);border-radius:8px;background:linear-gradient(180deg,rgba(22,30,40,0.96),rgba(15,21,30,0.92));box-shadow:0 10px 22px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.03);transition:all .2s ease;}

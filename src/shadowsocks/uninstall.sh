@@ -146,7 +146,7 @@ rm -rf /koolshare/configs/fancyss
 rm -rf /koolshare/.valid
 
 rm -rf /koolshare/res/shadowsocks.css
-rm -rf /koolshare/res/fancyss.css
+rm -rf /koolshare/res/fancyss.css /koolshare/res/xwt-ui.css
 find /koolshare/init.d/ -name "*shadowsocks.sh" | xargs rm -rf
 find /koolshare/init.d/ -name "*socks5.sh" | xargs rm -rf
 

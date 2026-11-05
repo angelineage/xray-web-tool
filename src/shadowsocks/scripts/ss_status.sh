@@ -335,7 +335,8 @@ ws)
 		if [ "${ss_failover_enable}" = "1" ];then
 			printf '%s@@%s\n' "${payload}" "${HEART_STATUS}" > "${STATUS_BACK_CACHE}"
 		else
-			http_response "${payload}" >/dev/null 2>&1
+			# Legacy http_response wraps raw bytes in JSON quotes. Escape HTML attributes.
+			http_response "$(printf '%s' "${payload}" | sed 's/\\/\\\\/g; s/"/\\"/g')" >/dev/null 2>&1
 		fi
 		;;
 esac
