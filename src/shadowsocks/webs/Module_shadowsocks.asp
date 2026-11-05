@@ -19,7 +19,8 @@
 <link rel="stylesheet" type="text/css" href="/res/softcenter.css">
 <link rel="stylesheet" type="text/css" href="/res/xwt-ui.css">
 <style type="text/css">
-#tablet_11 > div, #tablet_11 > div *, #tablet_11 > small { color:#ffcc00 !important; }
+#tablet_11 > div, #tablet_11 > div > div, #tablet_11 > small, #tablet_11 .xwt-counter { color:#eee !important; }
+#tablet_11 strong, #tablet_11 .xwt-counter-value { color:#ffcc00 !important; }
 
 .shunt-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px;padding:0 2px;}
 .shunt-summary-card,.shunt-rule-card,.shunt-fallback-card{position:relative;overflow:hidden;border:1px solid rgba(69,93,120,0.28);border-radius:8px;background:linear-gradient(180deg,rgba(22,30,40,0.96),rgba(15,21,30,0.92));box-shadow:0 10px 22px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.03);transition:all .2s ease;}
@@ -682,7 +683,7 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
 <script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
-<script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261105-5"></script>
+<script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261105-6"></script>
 <script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=0.1.3-log-sync"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
@@ -15324,15 +15325,15 @@ function toggleKeyMask(o, show){
 												</table>
 											</div>
 											<div id="tablet_11" style="display:none;padding:16px;background:#303f44;border-radius:6px;color:#eee;">
-<h3 style="margin-top:0">运行状态</h3><div id="xwt-error" role="status"></div>
-<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;color:#ffcc00;">
+<div id="xwt-error" role="status"></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;">
 <div>当前节点<strong id="xwt-node" style="display:block;font-size:20px">—</strong></div>
 <div>代理协议<strong id="xwt-type" style="display:block">—</strong></div>
 <div>内存（RSS）<strong id="xwt-memory" style="display:block;font-size:24px">—</strong></div>
-<div>代理上传速率<strong id="xwt-up" style="display:block;font-size:24px;color:#ffcc00">—</strong><span id="xwt-total-up" style="color:#ffcc00">上传 —</span></div>
-<div>代理下载速率<strong id="xwt-down" style="display:block;font-size:24px;color:#ffcc00">—</strong><span id="xwt-total-down" style="color:#ffcc00">下载 —</span></div>
+<div>代理上传速率<strong id="xwt-up" style="display:block;font-size:24px;color:#ffcc00">—</strong><span class="xwt-counter">上传 <span id="xwt-total-up" class="xwt-counter-value">—</span></span></div>
+<div>代理下载速率<strong id="xwt-down" style="display:block;font-size:24px;color:#ffcc00">—</strong><span class="xwt-counter">下载 <span id="xwt-total-down" class="xwt-counter-value">—</span></span></div>
 <div>进程 CPU（单核 100%）<strong id="xwt-cpu" style="display:block;font-size:24px">—</strong></div>
-</div><small style="display:block;margin-top:12px;color:#ffcc00">流量为 Xray 代理出站合计，不含直连；累计值自代理进程启动计算。切离页面后停止刷新。</small></div>
+</div><small style="display:block;margin-top:12px">流量为 Xray 代理出站合计，不含直连；累计值自代理进程启动计算。切离页面后停止刷新。</small></div>
 <div id="add_fancyss_node" class="contentM_qis pop_div_bg">
 												<table class="QISform_wireless" border="0" align="center" cellpadding="5" cellspacing="0">
 													<tr style="height:32px;">

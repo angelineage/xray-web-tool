@@ -68,4 +68,6 @@ console.log('Legacy status JSON escape check passed.');
 
 assert.doesNotMatch(html,/RT-AC3100 兼容检测|性能优化/);
 
-assert.match(html,/#tablet_11 > div, #tablet_11 > div \*, #tablet_11 > small \{ color:#ffcc00 !important; \}/);
+
+assert.match(html,/#tablet_11 \.xwt-counter \{ color:#eee !important; \}/);
+assert.match(html,/#tablet_11 strong, #tablet_11 \.xwt-counter-value \{ color:#ffcc00 !important; \}/);
