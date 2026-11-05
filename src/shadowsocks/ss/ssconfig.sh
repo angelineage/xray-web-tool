@@ -217,6 +217,9 @@ compare_time(){
 test_xray_conf(){
 	#uset _test_ret
 	local conf=$1
+    # A local HTTP metrics endpoint avoids spawning an Xray CLI for every sample.
+    jq '.stats = (.stats // {}) | .policy.system.statsOutboundUplink=true | .policy.system.statsOutboundDownlink=true |
+        .metrics={tag:"xwt-metrics",listen:"127.0.0.1:11111"}' "$conf" > "$conf.dashboard" && mv "$conf.dashboard" "$conf" || return 1
 	local xray_asset_dir=""
 	echo_date "测试xray配置文件..."
 	if [ "$(get_runtime_proxy_mode)" = "7" ] && type fss_shunt_xray_asset_dir >/dev/null 2>&1; then

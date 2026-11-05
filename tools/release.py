@@ -21,6 +21,7 @@ if __name__ == '__main__':
     version = json.loads((ROOT / 'maintenance.json').read_text('utf-8'))['version']
     run(sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-v')
     run('node', 'tests/test_ui.cjs')
+    run('node', 'tests/test_dashboard.cjs')
     run('node', 'tests/test_probe.cjs')
     run(sys.executable, 'tools/build.py')
     if args.tag:

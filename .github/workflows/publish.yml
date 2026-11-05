@@ -2,8 +2,6 @@ name: Publish Xray Web Tool
 on:
   push:
     tags: ['v*']
-    branches: [main]
-    paths: ['.github/workflows/publish.yml']
   workflow_dispatch:
     inputs:
       release_tag:
@@ -36,6 +34,7 @@ jobs:
           node-version: '22'
       - run: python -m unittest discover -s tests -v
       - run: node tests/test_ui.cjs
+      - run: if [ -f tests/test_dashboard.cjs ]; then node tests/test_dashboard.cjs; fi
       - run: node tests/test_probe.cjs
       - run: python tools/build.py
       - name: Publish verified tag assets

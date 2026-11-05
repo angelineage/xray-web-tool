@@ -17,15 +17,9 @@ STATUS_WS_LOCK_DIR=/tmp/fancyss_status_ws.lock
 STATUS_WS_LOCK_PID_FILE=${STATUS_WS_LOCK_DIR}/pid
 STATUS_HTTP_LOCK_DIR=/tmp/fancyss_status_http.lock
 STATUS_HTTP_LOCK_PID_FILE=${STATUS_HTTP_LOCK_DIR}/pid
-STATUS_SERVE_SOCKET=/tmp/status-tool.sock
-STATUS_SERVE_ARGS_FILE=/tmp/status-tool-serve.args
-STATUS_CTL_BIN=/koolshare/bin/statusctl
-STATUS_DAEMON_SCRIPT=/koolshare/scripts/ss_status_daemon.sh
 STATUS_WS_LOCK_MAX_AGE=60
 STATUS_HTTP_LOCK_MAX_AGE=20
 STATUS_CACHE_MAX_AGE=120
-STATUS_CTL_TIMEOUT=8
-STATUS_ONCE_TIMEOUT=8
 
 LOGTIME=$(TZ=UTC-8 date -R "+%Y-%m-%d %H:%M:%S")
 HEART_STATUS=$(dbus get ss_heart_beat)
@@ -35,17 +29,6 @@ PROXY_IPV6=$(dbus get ss_basic_proxy_ipv6)
 [ -n "${CHN_TEST_SITE}" ] || CHN_TEST_SITE="$(get_fancyss_default_curl)"
 [ -n "${FRN_TEST_SITE}" ] || FRN_TEST_SITE="$(get_fancyss_default_furl)"
 
-pick_status_tool(){
-	if [ -x "/koolshare/bin/status-tool" ];then
-		echo "/koolshare/bin/status-tool"
-		return 0
-	fi
-	if command -v status-tool >/dev/null 2>&1;then
-		command -v status-tool
-		return 0
-	fi
-	return 1
-}
 
 status_socks5_ready() {
 	netstat -nlp 2>/dev/null \
@@ -72,13 +55,6 @@ get_status_payload(){
 	fi
 }
 
-status_tool_tz(){
-	local tz=""
-	tz="$(nvram get time_zone 2>/dev/null)"
-	[ -n "${tz}" ] || tz="$(nvram get time_zone_x 2>/dev/null)"
-	[ -n "${tz}" ] || tz="CST-8"
-	printf '%s' "${tz}"
-}
 
 status_payload_epoch(){
 	local payload="$1"
@@ -251,100 +227,12 @@ release_status_http_lock(){
 	rmdir "${STATUS_HTTP_LOCK_DIR}" >/dev/null 2>&1
 }
 
-json_probe_line(){
-	local json_text="$1"
-	local probe_name="$2"
-	local label="$3"
-	local now="$4"
-	local ok="" ms=""
-	IFS="$(printf '\037')" read -r ok ms <<-EOF
-	$(printf '%s' "${json_text}" | jq -r --arg name "${probe_name}" '
-		(.results // []) | map(select(.name == $name)) as $items
-		| if ($items | length) == 0 then
-			["false", "0"]
-		  else
-			[
-				(($items[0].ok // false) | tostring),
-				(($items[0].elapsed_ms // 0) | tostring)
-			]
-		  end
-		| join("\u001f")
-	' 2>/dev/null)
-	EOF
-	if [ "${ok}" = "true" ];then
-		if [ "${ms}" != "0" ];then
-			printf '%s' "${label} 【${now}】 ✓&nbsp;&nbsp;${ms} ms"
-			return 0
-		fi
-	fi
-	printf '%s' "${label} 【${now}】 <font color=\"#FF0000\">X</font>"
-}
 
-refresh_payload_once(){
-	local status_tool="$1"
-	if [ "${PROXY_IPV6}" = "1" ];then
-		TZ="$(status_tool_tz)" __timeout_run "${STATUS_ONCE_TIMEOUT}" "${status_tool}" fancyss --china-url "${CHN_TEST_SITE}" --foreign-url "${FRN_TEST_SITE}" --proxy-ipv6 1 2>/dev/null || return 1
-	else
-		TZ="$(status_tool_tz)" __timeout_run "${STATUS_ONCE_TIMEOUT}" "${status_tool}" fancyss --china-url "${CHN_TEST_SITE}" --foreign-url "${FRN_TEST_SITE}" --proxy-ipv6 0 --foreign-proxy "socks5://127.0.0.1:23456" 2>/dev/null || return 1
-	fi
-}
 
-status_probe_mode(){
-	local mode="$(dbus get ss_basic_status_mode 2>/dev/null)"
-	case "${mode}" in
-	serve|once)
-		printf '%s' "${mode}"
-		;;
-	*)
-		printf '%s' "serve"
-		;;
-	esac
-}
 
-refresh_payload_via_ctl(){
-	local payload=""
-	[ -x "${STATUS_CTL_BIN}" ] || return 1
-	[ -S "${STATUS_SERVE_SOCKET}" ] || return 1
-	payload="$("${STATUS_CTL_BIN}" --socket-path "${STATUS_SERVE_SOCKET}" --timeout-ms $((STATUS_CTL_TIMEOUT * 1000)) probe-once 2>/dev/null)" || payload=""
-	case "${payload}" in
-	""|cache-miss*|error:*|unknown-command*)
-		payload="$("${STATUS_CTL_BIN}" --socket-path "${STATUS_SERVE_SOCKET}" --timeout-ms 1000 get-cache 2>/dev/null)" || return 1
-		;;
-	esac
-	payload="$(printf '%s' "${payload}" | sed 's/[[:space:]]*$//')"
-	status_payload_matches_mode "${payload}" || return 1
-	printf '%s' "${payload}"
-}
 
-status_serve_args_match(){
-	[ -f "${STATUS_SERVE_ARGS_FILE}" ] || return 1
-	grep -Fxq "china_url=${CHN_TEST_SITE}" "${STATUS_SERVE_ARGS_FILE}" || return 1
-	grep -Fxq "foreign_url=${FRN_TEST_SITE}" "${STATUS_SERVE_ARGS_FILE}" || return 1
-	grep -Fxq "proxy_ipv6=${PROXY_IPV6:-0}" "${STATUS_SERVE_ARGS_FILE}" || return 1
-	return 0
-}
 
-status_serve_process_running(){
-	local pid=""
-	if [ -f "/var/run/status-tool-serve.pid" ];then
-		pid="$(cat /var/run/status-tool-serve.pid 2>/dev/null)"
-		[ -n "${pid}" ] && kill -0 "${pid}" >/dev/null 2>&1 && return 0
-	fi
-	ps w | grep -E '(^| )/koolshare/bin/status-tool serve( |$)' | grep -v grep >/dev/null 2>&1
-}
 
-ensure_status_serve_runtime(){
-	[ "${ss_failover_enable}" != "1" ] || return 1
-	[ -x "${STATUS_CTL_BIN}" ] || return 1
-	if [ -S "${STATUS_SERVE_SOCKET}" ] && status_serve_args_match;then
-		status_serve_process_running && return 0
-	fi
-	[ -x "${STATUS_DAEMON_SCRIPT}" ] || return 1
-	sh "${STATUS_DAEMON_SCRIPT}" restart >/dev/null 2>&1 || return 1
-	sleep 1
-	[ -S "${STATUS_SERVE_SOCKET}" ] || return 1
-	status_serve_process_running
-}
 
 prepare(){
 	local fancyss_enable="$(dbus get ss_basic_enable)"
@@ -364,48 +252,11 @@ prepare(){
 }
 
 resolve_payload(){
-	local payload=""
-	if fss_probe_legacy_kernel; then
-		sh /koolshare/scripts/ss_status_curl.sh
-		return $?
-	fi
-	if payload="$(read_front_cache)"; then
-		printf '%s' "${payload}"
-		return 0
-	fi
-	if status_tool_bin="$(pick_status_tool)"; then
-		if payload="$(refresh_payload_once "${status_tool_bin}")" && status_payload_matches_mode "${payload}"; then
-			printf '%s' "${payload}"
-			return 0
-		fi
-	fi
-	sh /koolshare/scripts/ss_status_curl.sh
+    sh /koolshare/scripts/ss_status_curl.sh
 }
 
 resolve_payload_once_only(){
-	local payload=""
-	if fss_probe_legacy_kernel; then
-		sh /koolshare/scripts/ss_status_curl.sh
-		return $?
-	fi
-	if [ "$(status_probe_mode)" = "serve" ];then
-		ensure_status_serve_runtime >/dev/null 2>&1 || true
-		if payload="$(refresh_payload_via_ctl)"; then
-			printf '%s' "${payload}"
-			return 0
-		fi
-		if payload="$(read_front_cache)"; then
-			printf '%s' "${payload}"
-			return 0
-		fi
-	fi
-	if status_tool_bin="$(pick_status_tool)"; then
-		if payload="$(refresh_payload_once "${status_tool_bin}")" && status_payload_matches_mode "${payload}"; then
-			printf '%s' "${payload}"
-			return 0
-		fi
-	fi
-	sh /koolshare/scripts/ss_status_curl.sh
+    sh /koolshare/scripts/ss_status_curl.sh
 }
 
 if [ -z "$1" ] && [ -z "$2" ];then

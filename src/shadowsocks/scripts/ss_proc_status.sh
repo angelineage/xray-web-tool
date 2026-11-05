@@ -550,13 +550,8 @@ GET_STATUS_TOOL_MODE() {
 		echo "daemon"
 		return 0
 	fi
-	case "$(dbus get ss_basic_status_mode 2>/dev/null)" in
-	serve|"")
-		echo "serve"
-		return 0
-		;;
-	esac
-	return 1
+	echo "curl-compat"
+	return 0
 }
 
 GET_STATUS_TOOL_PID() {

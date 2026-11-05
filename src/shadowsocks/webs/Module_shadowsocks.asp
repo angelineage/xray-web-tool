@@ -680,6 +680,7 @@ body[skin="TS"] select option {
 <script language="JavaScript" type="text/javascript" src="/js/table/table.js"></script>
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
 <script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
+<script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261105-3"></script>
 <script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=0.1.3-log-sync"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
@@ -6783,9 +6784,7 @@ function conf2obj(obj, action) {
 			}
 		}
 	}
-	if (E("ss_basic_status_mode") && typeof obj["ss_basic_status_mode"] == "undefined") {
-		E("ss_basic_status_mode").value = "serve";
-	}
+
 }
 function ssconf_node2obj(node_sel) {
 	obj_node = {};
@@ -7029,7 +7028,7 @@ function save() {
 		  "ss_basic_lt_web_time",
 	  "ss_basic_lt_cru_opts",
 	  "ss_basic_lt_cru_time",
-	  "ss_basic_status_mode",
+
 	  "ss_basic_hy2_up_speed",
 	  "ss_basic_hy2_dl_speed",
 	  "ss_basic_hy2_tfo_switch",
@@ -7042,7 +7041,7 @@ function save() {
 	  "ss_failover_c2",
 	  "ss_failover_c3",
 	  "ss_adv_sub",
-	  "ss_basic_tablet",
+
 	  "ss_basic_noserver",
 	  "ss_basic_node_cards",
 	  "ss_basic_dragable",
@@ -8424,6 +8423,7 @@ function verifyFields(r) {
 		hy2_ai_on: hy2_ai_on
 	};
 	applyVisibility("#table_basic", ctx);
+    $("#ss_basic_shunt_hot_reload").closest("tr").toggle(current_mode_is_shunt());
 	if(v_grpc_on){
 		$("#ss_basic_v2ray_network_path_tr > th > a").html("* serviceName");
 	}else{
@@ -8482,7 +8482,7 @@ function verifyFields(r) {
 		$("#ss_sub_save_only").show();
 	}
 	var trid = $(r).attr("id")
-	if ( trid == "ss_basic_dragable" || trid == "ss_basic_tablet" || trid == "ss_basic_noserver" || trid == "ss_basic_node_cards") {
+	if ( trid == "ss_basic_dragable" || trid == "ss_basic_noserver" || trid == "ss_basic_node_cards") {
 		var dbus_post = {};
 		dbus_post[trid] = E(trid).checked ? '1' : '0';
 		if(is_ws_available()){
@@ -8530,6 +8530,7 @@ function sync_chinadns_ipv6_drop_proxy_ui() {
 	}
 }
 function update_visibility() {
+    $("#ss_basic_shunt_hot_reload").closest("tr").toggle(current_mode_is_shunt());
 	var a  = E("ss_basic_rule_update").value == "1";
 	var b  = E("ss_basic_node_update").value == "1";
 	var f = E("ss_basic_dig_opt").value;
@@ -12710,8 +12711,9 @@ function update_ss() {
     push_data("ss_update.sh", "update", {});
 }
 function tabSelect(w) {
+    if (w !== 11) XwtDashboard.stop();
 	if (w !== 10 && mainLogViewer) mainLogViewer.stop();
-	for (var i = 0; i <= 10; i++) {
+	for (var i = 0; i <= 11; i++) {
 		$('.show-btn' + i).removeClass('active');
 		$('#tablet_' + i).hide();
 	}
@@ -12720,6 +12722,7 @@ function tabSelect(w) {
 	$('#tablet_' + w).show();
 }
 var tab_actions = {
+    11: function(){ $("#apply_button").hide(); XwtDashboard.start(); },
 	0: function() {
 		$('#apply_button').show();
 		$('#ss_failover_save').hide();
@@ -12876,12 +12879,7 @@ function toggle_func() {
 		$('.sub-btn2').addClass('active2');
 		verifyFields()
 	});
-	var default_tab = current_mode_is_shunt() ? 5 : parseInt(E("ss_basic_tablet").checked ? "1":"0");
-	if (node_nu == 0 && poped == 0) {
-		$(".show-btn1").trigger("click");
-	}else{
-		$(".show-btn" + default_tab).trigger("click");
-	}
+	$(".show-btn11").trigger("click");
 }
 function refresh_basic_method_width() {
 	change_select_width('#ss_basic_method', '1');
@@ -13332,7 +13330,6 @@ function get_ss_status_front_websocket() {
 		return false;
 	}
 	statusFrontPending = true;
-	var statusMode = (typeof db_ss["ss_basic_status_mode"] == "undefined" || db_ss["ss_basic_status_mode"] === "") ? "serve" : String(db_ss["ss_basic_status_mode"]);
 	status_front_ws_direct = false;
 	clear_front_status_ws_watchdog();
 	statusFrontWsWatchdog = setTimeout(function() {
@@ -15135,11 +15132,6 @@ function toggleKeyMask(o, show){
 											["60", "60分钟"]
 										   ]
 								var lt_time = [["15", "每隔15分钟"], ["20", "每隔20分钟"], ["30", "每隔30分钟"], ["60", "每隔60分钟"]];
-								var option_status_mode = [
-									["serve", "serve 常驻低开销（推荐）"],
-									["once", "once 按次启动"],
-									["", "兼容模式"]
-								];
 									$('#table_test').forms([
 										{ title: '延迟测试设置', thead:'1'},
 										{ title: '<a onmouseover="mOver(this, 147)" onmouseout="RunmOut(this)" class="hintstyle" style="color:#03a9f4;" href="javascript:void(0);">web延迟测试网址 - 国外</a>', id:'ss_basic_furl', type:'select', style:'width:auto', options:furl, value:''},
@@ -15314,7 +15306,8 @@ function toggleKeyMask(o, show){
 												<table style="margin:10px 0px 0px 0px;border-collapse:collapse" width="100%" height="37px">
 													<tr>
 														<td cellpadding="0" cellspacing="0" style="padding:0" border="1" bordercolor="#222">
-															<input id="show_btn0" class="show-btn0" style="cursor:pointer" type="button" value="帐号设置" />
+															<input id="show_btn11" class="show-btn11" style="cursor:pointer" type="button" value="运行状态" />
+<input id="show_btn0" class="show-btn0" style="cursor:pointer" type="button" value="帐号设置" />
 															<input id="show_btn1" class="show-btn1" style="cursor:pointer" type="button" value="节点管理" />
 															<input id="show_btn5" class="show-btn5" style="cursor:pointer;display:none;" type="button" value="节点分流" />
 															<input id="show_btn2" class="show-btn2" style="cursor:pointer" type="button" value="故障转移" />
@@ -15328,7 +15321,17 @@ function toggleKeyMask(o, show){
 													</tr>
 												</table>
 											</div>
-											<div id="add_fancyss_node" class="contentM_qis pop_div_bg">
+											<div id="tablet_11" style="display:none;padding:16px;background:#303f44;border-radius:6px;color:#eee;">
+<h3 style="margin-top:0">运行状态</h3><div id="xwt-refresh">正在读取…</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;">
+<div>当前节点<strong id="xwt-node" style="display:block;font-size:20px">—</strong><span id="xwt-type">—</span></div>
+<div>代理进程<strong id="xwt-process" style="display:block">—</strong></div>
+<div>内存（RSS）<strong id="xwt-memory" style="display:block;font-size:24px">—</strong></div>
+<div>代理上传速率<strong id="xwt-up" style="display:block;font-size:24px">—</strong></div>
+<div>代理下载速率<strong id="xwt-down" style="display:block;font-size:24px">—</strong></div>
+<div>进程 CPU（单核 100%）<strong id="xwt-cpu" style="display:block;font-size:24px">—</strong></div>
+</div><p id="xwt-total">正在读取流量…</p><small>流量为 Xray 代理出站合计，不含直连；累计值自代理进程启动计算。切离页面后停止刷新。</small></div>
+<div id="add_fancyss_node" class="contentM_qis pop_div_bg">
 												<table class="QISform_wireless" border="0" align="center" cellpadding="5" cellspacing="0">
 													<tr style="height:32px;">
 														<td>
@@ -16179,14 +16182,13 @@ function toggleKeyMask(o, show){
 															{ title: '节点列表最大显示行数', id:'ss_basic_row', type:'select', func:'onchange="save_row();"', style:'width:auto', options:[]},
 															{ title: '开启节点排序功能', id:'ss_basic_dragable', func:'v', type:'checkbox', value:true},
 															{ title: '节点管理使用卡片视图', id:'ss_basic_node_cards', func:'v', type:'checkbox', value:true},
-															{ title: '节点管理页面设为默认标签页', id:'ss_basic_tablet', func:'v', type:'checkbox', value:false},
 															{ title: '节点管理页面隐藏服务器地址', id:'ss_basic_noserver', func:'v', type:'checkbox', value:false},
 															{ td: '<tr><td class="smth" style="font-weight: bold;" colspan="2">代理行为</td></tr>'},
 															{ title: '开启ipv6代理', id:'ss_basic_proxy_ipv6', hint:'146', type:'checkbox', func:'u', value:false},
 															{ title: 'New Bing模式', id:'ss_basic_proxy_newb', hint:'149', type:'checkbox', value:true},
 															{ td: '<tr><td class="smth" style="font-weight: bold;" colspan="2">性能优化</td></tr>'},
-															{ title: 'xray热重载', id:'ss_basic_shunt_hot_reload', type:'checkbox', value:false},
-															{ title: '运行状态检测模式', id:'ss_basic_status_mode', type:'select', style:'width:auto', options:option_status_mode, value:'serve'},
+															{ title: 'Xray 热重载', id:'ss_basic_shunt_hot_reload', type:'checkbox', value:false},
+															{ title: '运行状态检测', suffix:'RT-AC3100 兼容检测'},
 															{ td: '<tr><td class="smth" style="font-weight: bold;" colspan="2">其它</td></tr>'},
 															{ title: '插件开启时 - 跳过网络可用性检测', id:'ss_basic_nonetcheck', hint:'138', type:'checkbox', value:false},
 															{ title: '插件开启时 - 跳过国内出口ip检测', id:'ss_basic_nochnipcheck', hint:'142', type:'checkbox', value:false},
