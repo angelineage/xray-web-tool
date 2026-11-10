@@ -10,9 +10,13 @@ WORK="/tmp/fss_update.$$"
 umask 077
 mkdir "${WORK}" || exit 1
 trap 'rm -rf "${WORK}"' EXIT
-fetch() { "$CURL" -fsSL --connect-timeout 10 --max-time 120 --retry 2 "$1" -o "$2"; }
+fetch() {
+    "$CURL" -fsSL --connect-timeout 5 --max-time 60 --retry 1 --noproxy '*' --proto '=https' --proto-redir '=https' "$1" -o "$2" && return 0
+    "$CURL" -fsSL --connect-timeout 5 --max-time 120 --retry 1 --socks5-hostname 127.0.0.1:23456 --noproxy '' --proto '=https' --proto-redir '=https' "$1" -o "$2"
+}
 check_release() {
-    "$CURL" -fsSL --connect-timeout 5 --max-time 15 "${REPO}/releases/latest" -o "${WORK}/release.json" || return 1
+    "$CURL" -fsSL --connect-timeout 3 --max-time 8 --noproxy '*' "${REPO}/releases/latest" -o "${WORK}/release.json" ||
+        "$CURL" -fsSL --connect-timeout 3 --max-time 8 --socks5-hostname 127.0.0.1:23456 --noproxy '' "${REPO}/releases/latest" -o "${WORK}/release.json" || return 1
     TAG=$($JQ -r '.tag_name' "${WORK}/release.json")
     printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' || return 1
 }
@@ -53,7 +57,7 @@ http_response "$REQUEST_ID" >/dev/null 2>&1
     tar -xzf "${WORK}/package.tar.gz" -C "${WORK}/extract" || exit 1
     META="${WORK}/extract/shadowsocks/ss/maintenance.json"
     $JQ -e --arg v "$NEW" '.version==$v and .target.model=="RT-AC3100" and .target.arch=="arm" and .target.edition=="lite"' "$META" >/dev/null || { echo '安装包版本或机型不匹配'; echo XU6J03M6; exit 1; }
-    echo "正在安装 Xray Web Tool ${TAG}..."
+    echo "安装包下载及校验完成，开始安装 Xray Web Tool ${TAG}..."
     if [ -e /tmp/shadowsocks ]; then echo '另一个安装任务尚未完成，请稍后重试。'; echo XU6J03M6; exit 1; fi
     mv "${WORK}/extract/shadowsocks" /tmp/shadowsocks || exit 1
     sh /tmp/shadowsocks/install.sh

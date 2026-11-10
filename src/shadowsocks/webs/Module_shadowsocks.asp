@@ -12595,9 +12595,8 @@ var latestReleaseVersion = "";
 function version_show() {
     var current = window.FANCYSS_AC3100.version;
     var newer = latestReleaseVersion && is_newer_release(latestReleaseVersion, current);
-    $("#updateBtn").text(newer ? "立即更新" : "检查更新");
-    $("#updateVersion").text("v" + (newer ? latestReleaseVersion : current))
-        .attr("title", newer ? "最新版本；当前版本 v" + current : "当前版本 v" + current);
+    $("#updateBtn").text((newer ? "立即更新" : "检查更新") + (latestReleaseVersion ? " v" + latestReleaseVersion : ""));
+    $("#updateVersion").text("v" + current).attr("title", "当前版本 v" + current);
 }
 function check_release_once() {
     version_show();

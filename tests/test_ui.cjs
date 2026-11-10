@@ -83,9 +83,9 @@ vm.runInContext(html.slice(html.indexOf('function update_ss()'),html.indexOf('fu
 releaseCtx.version_show();assert.equal(releaseRequests.length,0);assert.equal(releaseFields['#updateVersion'],'v0.1.3');
 releaseCtx.check_release_once();releaseCtx.check_release_once();assert.equal(releaseRequests.length,1);
 assert.equal(JSON.parse(releaseRequests[0].data).params[0],'check');
-releaseRequests[0].success({result:'v0.1.4'});assert.equal(releaseFields['#updateVersion'],'v0.1.4');
-assert.equal(releaseFields['#updateBtn'],'\u7acb\u5373\u66f4\u65b0');
-releaseCtx.version_show();assert.equal(releaseFields['#updateVersion'],'v0.1.4');
+releaseRequests[0].success({result:'v0.1.4'});assert.equal(releaseFields['#updateVersion'],'v0.1.3');
+assert.equal(releaseFields['#updateBtn'],'立即更新 v0.1.4');
+releaseCtx.version_show();assert.equal(releaseFields['#updateVersion'],'v0.1.3');
 releaseCtx.update_ss();assert.equal(updateCalls[0][0],'ss_update.sh');assert.equal(updateCalls[0][1],'update');
 for(const tag of ['v0.1.3','v0.1.2','unavailable']){releaseRequests[0].success({result:tag});assert.equal(releaseFields['#updateVersion'],'v0.1.3');}
 releaseRequests[0].error();releaseCtx.check_release_once();assert.equal(releaseRequests.length,1);
