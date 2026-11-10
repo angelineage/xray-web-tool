@@ -73,7 +73,7 @@ python tools/release.py --tag
 
 `release.py` 要求工作区干净，执行测试、打包、创建本地注解标签并导出源码。推送个人 GitHub 仓库后，push/PR/标签会触发自动测试和打包；标签必须与版本一致。Actions 产物保存在对应运行的 Artifacts，当前工作流不自动创建公开 Release。
 
-规则工作流使用手动触发，只生成待审核补丁，不自动提交、不自动改路由器。远程仓库为 `https://github.com/angelineage/xray-web-tool.git`；工作流实际状态请查看仓库 Actions，本地通过不能代替云端验证。
+规则工作流每天北京时间 04:30 从上游生成规则，也支持在 GitHub Actions 手动运行。下载、格式和数量检查及基础测试通过后，内容有变化才提交规则和来源记录。路由器按自身的规则更新设置下载，定时任务需要在插件页面单独开启。远程仓库为 `https://github.com/angelineage/xray-web-tool.git`。
 
 ## 实机测试
 
