@@ -11,13 +11,32 @@ umask 077
 mkdir "${WORK}" || exit 1
 trap 'rm -rf "${WORK}"' EXIT
 fetch() {
-    "$CURL" -fsSL --connect-timeout 5 --max-time 60 --retry 1 --noproxy '*' --proto '=https' --proto-redir '=https' "$1" -o "$2" && return 0
-    "$CURL" -fsSL --connect-timeout 5 --max-time 120 --retry 1 --socks5-hostname 127.0.0.1:23456 --noproxy '' --proto '=https' --proto-redir '=https' "$1" -o "$2"
+    local url="$1" output="$2" attempt=0 rc
+    "$CURL" -fsSL --connect-timeout 5 --max-time 60 --noproxy '*' --proto '=https' --proto-redir '=https' "$url" -o "$output" && return 0
+    while [ "$attempt" -lt 3 ]; do
+        attempt=$((attempt + 1))
+        echo "通过代理下载，续传尝试 ${attempt}/3..."
+        "$CURL" -fsSL --connect-timeout 5 --max-time 300 --socks5-hostname 127.0.0.1:23456 --noproxy '' --proto '=https' --proto-redir '=https' -C - "$url" -o "$output" && return 0
+        rc=$?
+        if [ "$rc" = 33 ]; then
+            echo '服务器不支持续传，重新下载。'
+            rm -f "$output"
+        fi
+    done
+    return 1
+}
+jq_retry() {
+    local attempt=0 result
+    while [ "$attempt" -lt 3 ]; do
+        attempt=$((attempt + 1))
+        result=$("$JQ" "$@" 2>/dev/null) && { printf '%s\n' "$result"; return 0; }
+    done
+    return 1
 }
 check_release() {
     "$CURL" -fsSL --connect-timeout 3 --max-time 8 --noproxy '*' "${REPO}/releases/latest" -o "${WORK}/release.json" ||
         "$CURL" -fsSL --connect-timeout 3 --max-time 8 --socks5-hostname 127.0.0.1:23456 --noproxy '' "${REPO}/releases/latest" -o "${WORK}/release.json" || return 1
-    TAG=$($JQ -r '.tag_name' "${WORK}/release.json")
+    TAG=$(jq_retry -r '.tag_name' "${WORK}/release.json") || return 1
     printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' || return 1
 }
 if [ "${ACTION}" = check ]; then
@@ -34,15 +53,15 @@ http_response "$REQUEST_ID" >/dev/null 2>&1
 {
     echo '正在检查 Xray Web Tool 最新正式版本...'
     if ! check_release; then echo '检查更新失败，请稍后重试。'; echo XU6J03M6; exit 1; fi
-    CURRENT=$($JQ -r '.version' /koolshare/ss/maintenance.json)
+    CURRENT=$(jq_retry -r '.version' /koolshare/ss/maintenance.json) || { echo '无法读取当前版本'; echo XU6J03M6; exit 1; }
     if [ "$TAG" = "v${CURRENT}" ]; then echo "当前已是最新版本 ${CURRENT}"; echo XU6J03M6; exit 0; fi
     # Never downgrade: numeric comparison supports multi-digit version segments.
     NEW=${TAG#v}
     latest=$(printf '%s\n%s\n' "$CURRENT" "$NEW" | sort -t . -k1,1n -k2,2n -k3,3n | tail -1)
     [ "$latest" = "$NEW" ] || { echo '当前版本高于仓库版本，无需更新。'; echo XU6J03M6; exit 0; }
     NAME="xray_web_tool_arm_lite_ac3100_${NEW}.tar.gz"
-    URL=$($JQ -r --arg n "$NAME" '.assets[]|select(.name==$n)|.browser_download_url' "${WORK}/release.json")
-    SUMURL=$($JQ -r '.assets[]|select(.name=="SHA256SUMS.txt")|.browser_download_url' "${WORK}/release.json")
+    URL=$(jq_retry -r --arg n "$NAME" '.assets[]|select(.name==$n)|.browser_download_url' "${WORK}/release.json") || { echo '无法解析安装包地址'; echo XU6J03M6; exit 1; }
+    SUMURL=$(jq_retry -r '.assets[]|select(.name=="SHA256SUMS.txt")|.browser_download_url' "${WORK}/release.json") || { echo '无法解析校验文件地址'; echo XU6J03M6; exit 1; }
     case "$URL" in https://github.com/angelineage/xray-web-tool/releases/download/*) ;; *) echo '发布包地址无效'; echo XU6J03M6; exit 1 ;; esac
     case "$SUMURL" in https://github.com/angelineage/xray-web-tool/releases/download/*) ;; *) echo '校验地址无效'; echo XU6J03M6; exit 1 ;; esac
     echo "下载 ${TAG} 并验证 SHA-256..."
@@ -56,7 +75,7 @@ http_response "$REQUEST_ID" >/dev/null 2>&1
     if grep -Eq '(^/|(^|/)\.\.(/|$))' "${WORK}/entries"; then echo '安装包路径异常'; echo XU6J03M6; exit 1; fi
     tar -xzf "${WORK}/package.tar.gz" -C "${WORK}/extract" || exit 1
     META="${WORK}/extract/shadowsocks/ss/maintenance.json"
-    $JQ -e --arg v "$NEW" '.version==$v and .target.model=="RT-AC3100" and .target.arch=="arm" and .target.edition=="lite"' "$META" >/dev/null || { echo '安装包版本或机型不匹配'; echo XU6J03M6; exit 1; }
+    jq_retry -e --arg v "$NEW" '.version==$v and .target.model=="RT-AC3100" and .target.arch=="arm" and .target.edition=="lite"' "$META" >/dev/null || { echo '安装包版本或机型不匹配'; echo XU6J03M6; exit 1; }
     echo "安装包下载及校验完成，开始安装 Xray Web Tool ${TAG}..."
     if [ -e /tmp/shadowsocks ]; then echo '另一个安装任务尚未完成，请稍后重试。'; echo XU6J03M6; exit 1; fi
     mv "${WORK}/extract/shadowsocks" /tmp/shadowsocks || exit 1

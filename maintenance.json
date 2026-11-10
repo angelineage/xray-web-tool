@@ -1,6 +1,6 @@
 {
   "name": "xray-web-tool",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "upstream_version": "3.5.30",
   "upstream_commit": "b19e82cb6a05e08990a96905353921819d44d134",
   "target": {

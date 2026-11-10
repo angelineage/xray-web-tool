@@ -12623,7 +12623,7 @@ function message_show() {
 	if (node_nu == 0 && poped == 0) pop_node_add();
 }
 function update_ss() {
-    db_ss["ss_basic_action"] = "0";
+    db_ss["ss_basic_action"] = "7";
     push_data("ss_update.sh", "update", {});
 }
 function tabSelect(w) {
