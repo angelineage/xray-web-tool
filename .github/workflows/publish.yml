@@ -44,7 +44,15 @@ jobs:
           test "$RELEASE_TAG" = "v$(python -c 'import json; print(json.load(open("maintenance.json"))["version"])')"
           VERSION="${RELEASE_TAG#v}"
           git archive --format=tar.gz --prefix=xray-web-tool/ -o "dist/xray-web-tool-source-${VERSION}.tar.gz" HEAD
-          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "Xray Web Tool ${RELEASE_TAG}" --notes-file CHANGELOG.md
+          awk -v version="$VERSION" '
+            BEGIN { gsub(/\./, "[.]", version) }
+            $0 ~ "^## " version "([[:space:]]|$)" { found=1; print; next }
+            found && /^## / { exit }
+            found { print }
+            END { if (!found) exit 1 }
+          ' CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
+          test -s "$RUNNER_TEMP/release-notes.md"
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "Xray Web Tool ${RELEASE_TAG}" --notes-file "$RUNNER_TEMP/release-notes.md"
           for ASSET in "dist/xray_web_tool_arm_lite_ac3100_${VERSION}.tar.gz" "dist/xray-web-tool-source-${VERSION}.tar.gz" dist/SHA256SUMS.txt dist/build-manifest.json; do
             NAME="${ASSET##*/}"
             EXPECTED="sha256:$(sha256sum "$ASSET" | cut -d' ' -f1)"
