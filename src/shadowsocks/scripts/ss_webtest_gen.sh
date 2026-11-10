@@ -375,20 +375,9 @@ wt_wrap_user_outbound_json() {
 }
 
 wt_get_server_addr() {
-	local server_host="$1"
-	local server_ip=""
-
-	[ -n "${server_host}" ] || return 1
-	if wt_server_resolv_mode_is_dynamic; then
-		printf '%s' "${server_host}"
-		return 0
-	fi
-	server_ip=$(_get_server_ip "${server_host}")
-	if [ -n "${server_ip}" ]; then
-		printf '%s' "${server_ip}"
-	else
-		printf '%s' "${server_host}"
-	fi
+	# The maintained build resolves node domains at runtime.
+	[ -n "$1" ] || return 1
+	printf '%s' "$1"
 }
 
 wt_gen_ss_outbound() {

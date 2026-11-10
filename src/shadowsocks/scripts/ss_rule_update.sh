@@ -56,11 +56,16 @@ change_cru() {
 	else echo_date '规则定时更新已关闭'; fi
 }
 start_update() {
-	local base key enabled name expected actual found=0
+	local base key enabled name expected actual found=0 cache_token
+	if [ "${ss_basic_gfwlist_update}" != 1 ] && [ "${ss_basic_chnlist_update}" != 1 ] && [ "${ss_basic_chnroute_update}" != 1 ]; then
+		echo_date '未选择需要更新的规则，请先勾选 gfwlist、chnlist 或 chnroute'
+		return 1
+	fi
 	base="$("${JQ}" -r '.rules_base_url // empty' "${CONFIG}" 2>/dev/null)"
 	case "${base}" in https://?*) ;; *) echo_date '尚未配置自己的 HTTPS 规则发布地址。请在维护项目审核规则后，通过离线包更新。'; return 1 ;; esac
+	cache_token="$(date +%s)-$$"
 	mkdir -p "${WORK}/backup" || return 1
-	fetch "${base%/}/rules.json.js" "${WORK}/online.json" || { echo_date '规则清单下载失败，保留现有规则'; return 1; }
+	fetch "${base%/}/rules.json.js?xwt=${cache_token}" "${WORK}/online.json" || { echo_date '规则清单下载失败，保留现有规则'; return 1; }
 	"${JQ}" -e 'type=="object"' "${WORK}/online.json" >/dev/null 2>&1 || return 1
 	cp "${RULE_FILE}" "${WORK}/next.json" || return 1
 	for key in gfwlist chnlist chnroute; do
@@ -74,7 +79,7 @@ start_update() {
 		actual="$(sha256sum "${RULE_DIR}/${name}" | awk '{print $1}')"
 		if [ "${actual}" = "${expected}" ] && [ "${FORCE}" != 1 ]; then echo_date "${key} 内容已是最新"; continue; fi
 		echo_date "下载并校验 ${key}…"
-		fetch "${base%/}/${name}" "${WORK}/${name}" || return 1
+		fetch "${base%/}/${name}?xwt=${cache_token}" "${WORK}/${name}" || return 1
 		actual="$(sha256sum "${WORK}/${name}" | awk '{print $1}')"
 		[ "${actual}" = "${expected}" ] || { echo_date "${key} SHA-256 校验失败"; return 1; }
 		validate_rule "${key}" "${WORK}/${name}" || { echo_date "${key} 格式或数量异常"; return 1; }

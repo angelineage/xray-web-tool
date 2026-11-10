@@ -19,6 +19,44 @@ try{
   assert.match(check(0,204,'ok'),/--socks5-hostname\n127\.0\.0\.1:23456/);
   assert.match(check(0,204,'ok','127.0.0.1:23456','6'),/-6\n--noproxy\n\n--socks5\n/);
   assert.match(check(0,204,'ok',''),/--noproxy\n\*/);
+  const webtest=fs.readFileSync(path.join(root,'scripts/ss_webtest.sh'),'utf8');
+  const generator=fs.readFileSync(path.join(root,'scripts/ss_webtest_gen.sh'),'utf8');
+  const functionSource=(source,name)=>source.match(new RegExp('^'+name+'\\(\\) \\{[\\s\\S]*?^\\}','m'))[0];
+  const dnsTest=spawnSync(bash,['-s'],{encoding:'utf8',input:`set -e
+${functionSource(generator,'wt_get_server_addr')}
+${functionSource(webtest,'wt_ensure_node_direct_dns_ready')}
+_get_server_ip() { echo unexpected-early-resolution >&2; return 1; }
+test "$(wt_get_server_addr node.example.test)" = node.example.test
+test "$(wt_get_server_addr 192.0.2.1)" = 192.0.2.1
+if wt_get_server_addr ""; then exit 1; fi
+fss_refresh_node_direct_cache() { steps=cache; return "$cache_rc"; }
+fss_node_direct_cache_differs_from_runtime() { return "$diff_rc"; }
+fss_sync_node_direct_runtime() { steps="$steps sync"; }
+dbus() {
+  case "$2" in
+    ss_basic_enable) echo "$enabled" ;;
+    ss_basic_dns_plan) echo "$plan" ;;
+  esac
+}
+sh() { test "$*" = "/koolshare/ss/ssconfig.sh refresh_node_direct_dns" && steps="$steps refresh"; }
+cache_rc=1
+if wt_ensure_node_direct_dns_ready; then exit 1; fi
+test "$steps" = cache
+cache_rc=0 diff_rc=1
+wt_ensure_node_direct_dns_ready
+test "$steps" = cache
+diff_rc=0 enabled=0
+wt_ensure_node_direct_dns_ready
+test "$steps" = "cache sync"
+enabled=1 plan=2
+wt_ensure_node_direct_dns_ready
+test "$steps" = "cache refresh"
+plan=0
+wt_ensure_node_direct_dns_ready
+test "$steps" = "cache sync"
+`});
+  assert.equal(dnsTest.status,0,dnsTest.stderr);assert.equal(dnsTest.stderr,'');tests++;
+  assert.equal([...webtest.matchAll(/^node_direct_refresh\)/gm)].length,1);tests++;
   function files(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(item=>item.isDirectory()?files(path.join(dir,item.name)):[path.join(dir,item.name)]);}
   for(const file of files(root).filter(p=>p.endsWith('.sh'))){const result=spawnSync(bash,['-n',unix(file)],{encoding:'utf8'});assert.equal(result.status,0,result.stderr);tests++;}
   console.log(`${tests} probe and shell checks passed.`);

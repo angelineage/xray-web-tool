@@ -113,4 +113,9 @@ rebuild)
 	;;
 esac
 
-echo "fancyss"
+# Acknowledge web requests after the node and its identity metadata are saved.
+if [ "$2" = "rebuild" ];then
+	http_response "$1"
+else
+	echo "fancyss"
+fi

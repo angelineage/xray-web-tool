@@ -127,3 +127,94 @@ assert.equal(statusPoll.onSuccess('XWTSTATUS:122\nother report',{attempt:2}).don
 assert.equal(shownStatus,'');
 assert.equal(statusPoll.onSuccess('XWTSTATUS:123\ncurrent report',{attempt:3}).done,true);
 assert.equal(shownStatus,'current report');
+
+// Account edits, staged node selection, and runtime changes have separate requests.
+const proxyInputs={
+    ss_basic_enable:{checked:false},ssconf_basic_node:{value:'3'},save_account_node_button:{},
+    ss_basic_mode:{value:'2'},ss_basic_server:{value:'edited.example'},ss_basic_port:{value:'443'},
+    ss_basic_password:{value:'test'},ss_basic_method:{value:'aes-128-gcm'},
+    ss_basic_ss_obfs:{value:'0'},ss_basic_ss_obfs_host:{value:''}
+};
+const proxyCalls=[],accountRequests=[],proxyAlerts=[];
+let previousNode='2',proxyNodes=['1','2','3'];
+const proxyCtx={
+    db_ss:{ss_basic_enable:'0',ss_basic_mode:'2'},pendingProxyNodeId:null,submit_flag:'0',accountNodeSaving:false,
+    E:id=>proxyInputs[id],resolve_node_id:(id,blank)=>proxyNodes.includes(id)?id:blank?'':proxyNodes[0]||'',
+    get_saved_current_node_id:()=>proxyNodes.includes(previousNode)?previousNode:proxyNodes[0]||'',
+    get_node_identity:id=>'identity-'+id,get_node_persistent_mode:()=> '2',get_node_storage_schema:()=>2,
+    is_shunt_supported_node:id=>id!=='3',show_shunt_node_block_layer:id=>proxyAlerts.push(id),
+    get_shunt_supported_target_nodes:()=>proxyNodes.filter(id=>id!=='3').map(id=>({id})),
+    get_saved_shunt_default_node_id:()=> 'DIRECT',is_shunt_direct_target:id=>id==='DIRECT',
+    get_compare_store:()=>({}),compfilter:(_,fields)=>fields,set_ss_status_waiting:()=>{},
+    push_data:(method,action,fields)=>proxyCalls.push(JSON.parse(JSON.stringify({method,action,fields}))),
+    should_save_main_panel_node:id=>id==='3',get_node_type:()=> '0',Base64:{encode:x=>x},
+    build_schema2_upsert_fields:(fields,id)=>({['fss_node_'+id]:JSON.stringify(fields)}),
+    build_schema2_postsave_request:(id,fields)=>({id,method:'ss_node_postsave.sh',params:['rebuild','3'],fields}),
+    schedule_schema2_node_direct_refresh:()=>{},invalidate_schema2_webtest_results:()=>{},
+    refresh_table:cb=>cb(true),alert:message=>proxyAlerts.push(message),
+    $:{ajax:request=>accountRequests.push(request)}
+};
+vm.createContext(proxyCtx);
+vm.runInContext(html.slice(html.indexOf('function get_checked_proxy_node_id('),html.indexOf('function render_allow_insecure_notice(')),proxyCtx);
+vm.runInContext(html.slice(html.indexOf('function collect_main_panel_node_fields('),html.indexOf('function save()')),proxyCtx);
+const resetProxy=()=>{proxyCtx.submit_flag='0';proxyInputs.ss_basic_enable.checked=false;};
+proxyCtx.pendingProxyNodeId='3';
+proxyCtx.set_proxy_enabled(true);
+assert.deepEqual(proxyCalls.at(-1),{method:'ss_config.sh',action:'start',fields:{
+    ss_basic_enable:'1',fss_node_current:'3',fss_node_current_identity:'identity-3',ss_basic_mode:'2'
+}});
+proxyCtx.set_proxy_enabled(false);
+assert.equal(proxyCalls.length,1);
+resetProxy();
+proxyCtx.pendingProxyNodeId='';
+proxyCtx.set_proxy_enabled(true);
+assert.equal(proxyCalls.at(-1).fields.fss_node_current,'2');
+resetProxy();
+previousNode='99';proxyCtx.pendingProxyNodeId='99';
+proxyCtx.set_proxy_enabled(true);
+assert.equal(proxyCalls.at(-1).fields.fss_node_current,'1');
+resetProxy();
+proxyCtx.db_ss.ss_basic_enable='1';
+proxyCtx.set_proxy_enabled(false);
+assert.deepEqual(proxyCalls.at(-1),{method:'ss_config.sh',action:'stop',fields:{ss_basic_enable:'0'}});
+resetProxy();
+proxyCtx.db_ss.ss_basic_mode='7';proxyCtx.db_ss.ss_basic_enable='0';proxyCtx.pendingProxyNodeId='3';
+proxyCtx.set_proxy_enabled(true);
+assert.equal(proxyAlerts.at(-1),'3');
+proxyCtx.pendingProxyNodeId='';
+proxyCtx.set_proxy_enabled(true);
+assert.equal(proxyCalls.at(-1).fields.ss_basic_mode,'7');
+assert.equal(Object.hasOwn(proxyCalls.at(-1).fields,'ss_basic_shunt_default_node'),false);
+resetProxy();
+proxyNodes=[];
+const callsBeforeEmpty=proxyCalls.length;
+proxyCtx.set_proxy_enabled(true);
+assert.equal(proxyCalls.length,callsBeforeEmpty);
+assert.equal(proxyInputs.ss_basic_enable.checked,false);
+proxyNodes=['1','2','3'];
+proxyCtx.db_ss.ss_basic_mode='2';
+proxyCtx.pendingProxyNodeId='1';
+proxyCtx.save_and_apply_account_node();
+assert.equal(proxyInputs.ss_basic_enable.disabled,true);
+const accountRequest=JSON.parse(accountRequests[0].data);
+assert.deepEqual(Object.keys(accountRequest.fields),['fss_node_3']);
+const savedNode=JSON.parse(accountRequest.fields.fss_node_3);
+assert.equal(savedNode.ssconf_basic_server_3,'edited.example');
+assert.equal(savedNode.ssconf_basic_ss_obfs_3,'');
+assert.equal(proxyCalls.length,callsBeforeEmpty);
+accountRequests[0].success({result:accountRequest.id});
+assert.equal(proxyInputs.ss_basic_enable.disabled,false);
+assert.equal(proxyCalls.length,callsBeforeEmpty+1);
+assert.equal(proxyCalls.at(-1).fields.fss_node_current,'3');
+resetProxy();
+proxyCtx.save_and_apply_account_node();
+accountRequests[1].error();
+assert.equal(proxyInputs.ss_basic_enable.disabled,false);
+assert.equal(proxyCalls.length,callsBeforeEmpty+1);
+proxyCtx.compfilter=(_,fields)=>fields.fss_node_3?{}:fields;
+proxyCtx.save_and_apply_account_node();
+assert.equal(accountRequests.length,2);
+assert.equal(proxyCalls.at(-1).fields.fss_node_current,'3');
+assert.match(html,/onclick="set_proxy_enabled\(true\)" value="应用"/);
+assert.match(html,/onclick="save_and_apply_account_node\(\)" value="保存&应用"/);
+console.log('Proxy controls passed: selection fallback, runtime-only requests, account save and apply, and shunt guards.');

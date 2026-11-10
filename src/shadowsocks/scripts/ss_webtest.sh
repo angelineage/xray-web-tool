@@ -15,7 +15,6 @@ WT_WEBTEST_HISTORY=/tmp/upload/webtest_history.txt
 WT_WEBTEST_STOP_FLAG=/tmp/webtest.stop
 WT_WEBTEST_PID_FILE=/tmp/webtest.pid
 WT_WEBTEST_STATE_LOCK=/tmp/webtest.state.lock
-WT_SERVER_RESOLV_MODE="1"
 WT_NODE_CACHE_DIR=""
 WT_NODE_ACTIVE_ID=""
 WT_NODE_ACTIVE_JSON=""
@@ -884,22 +883,13 @@ wt_has_active_test_runner() {
 	'
 }
 
-wt_kill_stale_batch_runners() {
-	local self_pid="${1:-$$}"
-	local pid=""
-
-	ps w 2>/dev/null | awk -v self="${self_pid}" '
-		/ss_webtest\.sh/ && !/grep/ {
-			pid = $1
-			if (pid == self) next
-			if ($0 ~ /schedule_warm/ || $0 ~ /schedule_node_direct_refresh/ || $0 ~ /warm_cache/ || $0 ~ /node_direct_refresh/) next
-			print pid
-		}
-	' | while read -r pid
-	do
-		[ -n "${pid}" ] || continue
-		kill -9 "${pid}" >/dev/null 2>&1 || true
-	done
+# Single and batch tests share the same temporary files and result streams.
+wt_acquire_run_lock() {
+	exec 234>/tmp/xwt-webtest.run.lock
+	if ! flock -n 234; then
+		exec 234>&-
+		return 1
+	fi
 }
 
 wt_ensure_webtest_dir() {
@@ -1409,7 +1399,6 @@ wt_runtime_cleanup() {
 	killall wt-tuic >/dev/null 2>&1
 	killall wt-hy2 >/dev/null 2>&1
 	killall webtest-tool >/dev/null 2>&1
-	killall curl-fancyss >/dev/null 2>&1
 	ps w 2>/dev/null | grep -F '/tmp/fancyss_webtest/webtest_tool_' | grep -E 'follow\.sh|tail -n \+1 -f' | grep -v grep | awk '{print $1}' | while read -r pid
 	do
 		[ -n "${pid}" ] || continue
@@ -2143,7 +2132,6 @@ wt_show_current_group_preview() {
 wt_ensure_node_direct_dns_ready() {
 	local dns_plan=""
 
-	wt_server_resolv_mode_is_dynamic || return 0
 	fss_refresh_node_direct_cache >/dev/null 2>&1 || return 1
 	if ! fss_node_direct_cache_differs_from_runtime; then
 		return 0
@@ -2161,30 +2149,6 @@ wt_ensure_node_direct_dns_ready() {
 		fss_sync_node_direct_runtime >/dev/null 2>&1
 		;;
 	esac
-}
-
-refresh_node_direct_after_schema2_change() {
-	local dns_plan=""
-
-	fss_refresh_node_direct_cache >/dev/null 2>&1 || return 1
-	wt_server_resolv_mode_is_dynamic || return 0
-	if ! fss_node_direct_cache_differs_from_runtime; then
-		return 0
-	fi
-	[ "$(dbus get ss_basic_enable)" = "1" ] || {
-		fss_sync_node_direct_runtime >/dev/null 2>&1
-		return 0
-	}
-	dns_plan=$(dbus get ss_basic_dns_plan)
-	case "${dns_plan}" in
-	1|2)
-		sh /koolshare/ss/ssconfig.sh refresh_node_direct_dns >/dev/null 2>&1
-		;;
-	*)
-		fss_sync_node_direct_runtime >/dev/null 2>&1
-		;;
-	esac
-	return 0
 }
 
 wt_webtest_cache_prepare_dirs() {
@@ -2986,7 +2950,6 @@ webtest_web(){
 		if [ "${backup_usable}" -gt "0" ];then
 			cp -f "${WT_WEBTEST_BACKUP}" "${WT_WEBTEST_FILE}" >/dev/null 2>&1
 		else
-			clean_webtest
 			start_webtest
 			return 0
 		fi
@@ -3006,7 +2969,6 @@ webtest_web(){
 		wt_http_response "ok2, webtest result in ${ss_basic_lt_web_time}min, do not refresh!"
 	else
 		# 4. 结果已过期后再重新测速；节点数量/覆盖率不作为提前触发条件。
-		clean_webtest
 		start_webtest
 	fi
 }
@@ -3015,10 +2977,11 @@ start_webtest(){
 	if ! latency_feature_enabled; then
 		return 0
 	fi
-	wt_kill_stale_batch_runners "$$"
-	if wt_has_active_test_runner "$$"; then
+	[ ! -f /tmp/webtest.lock ] || return 0
+	wt_acquire_run_lock || {
+		wt_http_response "ok1, webtest is running..."
 		return 0
-	fi
+	}
 	# create lock
 	touch /tmp/webtest.lock
 	rm -f "${WT_WEBTEST_STOP_FLAG}"
@@ -3061,6 +3024,7 @@ start_webtest(){
 	# 5. remove lock
 	wt_finish_batch_run
 	trap - HUP INT TERM EXIT
+	exec 234>&-
 }
 
 sort_nodes(){
@@ -4206,7 +4170,6 @@ fi
 case $1 in
 2)
 	# start webtest by cron
-	clean_webtest
 	start_webtest
 	;;
 3)
@@ -4250,9 +4213,6 @@ ensure_cache_ids_file)
 	rm -rf "${TMP2}/node_cache" "${TMP2}/node_env" "${TMP2}/nodes_index.txt"
 	wt_ensure_webtest_cache_nodes_file "${ensure_webtest_cache_nodes_file}"
 	;;
-node_direct_refresh)
-	refresh_node_direct_after_schema2_change
-	;;
 esac
 
 case $WEBTEST_ACTION in
@@ -4294,7 +4254,8 @@ ensure_cache_ids_file)
 	wt_ensure_webtest_cache_nodes_file "${ensure_webtest_cache_nodes_file}"
 	;;
 node_direct_refresh)
-	refresh_node_direct_after_schema2_change
+	wt_ensure_node_direct_dns_ready
+	exit $?
 	;;
 web_webtest)
 	# 当用户进入插件，插件列表渲染好后开始调用本脚本进行webtest
@@ -4313,7 +4274,7 @@ cleanup_helpers)
 	rm -rf "${TMP2}" >/dev/null 2>&1
 	;;
 single_test)
-	if [ -f "/tmp/webtest.lock" ];then
+	if [ -f "/tmp/webtest.lock" ] || ! wt_acquire_run_lock; then
 		wt_http_response "busy"
 		exit 0
 	fi
@@ -4323,6 +4284,7 @@ single_test)
 	}
 	wt_http_response $1
 	single_test_node "${WEBTEST_ACTION_ARG}" "1"
+	exec 234>&-
 	;;
 manual_webtest)
 	ensure_latency_batch
@@ -4367,20 +4329,15 @@ ws_close_latency)
 	echo XU6J03M6
 	;;
 ws_single_test)
-	if [ -z "${WEBTEST_ACTION_ARG}" ];then
+	if [ -f "/tmp/webtest.lock" ] || ! wt_acquire_run_lock; then
 		echo busy
-		exit 0
-	fi
-	if [ -f "/tmp/webtest.lock" ];then
-		echo busy
+	elif wt_prepare_single_test_state "${WEBTEST_ACTION_ARG}" >/dev/null 2>&1; then
+		single_test_node "${WEBTEST_ACTION_ARG}" "1" >/dev/null 2>&1 &
+		echo XU6J03M6
 	else
-		if wt_prepare_single_test_state "${WEBTEST_ACTION_ARG}" >/dev/null 2>&1; then
-			sh /koolshare/scripts/ss_webtest.sh single_test "${WEBTEST_ACTION_ARG}" >/dev/null 2>&1 &
-			echo XU6J03M6
-		else
-			echo busy
-		fi
+		echo busy
 	fi
+	exec 234>&-
 	;;
 follow_webtest_ws)
 	wt_follow_webtest_ws

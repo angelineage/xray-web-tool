@@ -144,6 +144,7 @@ case $2 in
 start)
 	set_lock
 	true > /tmp/upload/ss_log.txt
+	printf '%s' "$1" > /tmp/upload/ss_log.operation
 	http_response "$1"
 	pre_start
 	start_fancyss | tee -a /tmp/upload/ss_log.txt 2>&1
@@ -153,6 +154,7 @@ start)
 start_shunt_hot)
 	set_lock
 	true > /tmp/upload/ss_log.txt
+	printf '%s' "$1" > /tmp/upload/ss_log.operation
 	http_response "$1"
 	pre_start
 	start_fancyss_shunt_hot | tee -a /tmp/upload/ss_log.txt 2>&1
@@ -170,6 +172,7 @@ start_by_ws)
 stop)
 	# 为了避免ss_config.sh本身也卡住，所以stop过程不使用文件锁，强行关闭
 	true > /tmp/upload/ss_log.txt
+	printf '%s' "$1" > /tmp/upload/ss_log.operation
 	http_response "$1"
 	pre_stop
 	stop_fancyss | tee -a /tmp/upload/ss_log.txt 2>&1
