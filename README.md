@@ -1,6 +1,6 @@
 # Xray Web Tool
 
-只维护 **ASUS RT-AC3100 / arm_lite / Linux 2.6.36** 的个人维护分支。
+只维护 **斐讯Phicomm K3 / 梅林386 / arm_lite / Linux 2.6.36** 的个人维护分支。
 
 维护版本从 **0.1.0** 开始；上游兼容版本保留 **3.5.30**，避免破坏原安装和配置迁移判断。界面、安装包名、Git 标签及 `maintenance.json` 使用独立维护版本。
 
