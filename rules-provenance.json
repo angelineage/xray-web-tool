@@ -1,5 +1,5 @@
 {
-  "fetched_at_utc": "2026-11-11T00:48:40.812448+00:00",
+  "fetched_at_utc": "2026-11-12T01:58:53.998886+00:00",
   "policy": "upstream-merged-v1",
   "sources": {
     "gfw_abp": {
@@ -9,7 +9,7 @@
     },
     "gfw_extra": {
       "url": "https://raw.githubusercontent.com/pexcn/daily/gh-pages/gfwlist/gfwlist.txt",
-      "sha256": "3e24b6d605e7b8fe02133646662df29ec9eefc3af1edfaa140754b3019765b6a",
+      "sha256": "7feda1ea6b6c4b113adc1aaca577d1cc699da1275df8bfe113b987443f28653c",
       "bytes": 59855
     },
     "china": {
@@ -29,13 +29,13 @@
     },
     "misaka": {
       "url": "https://raw.githubusercontent.com/misakaio/chnroutes2/master/chnroutes.txt",
-      "sha256": "457d681bf463026f21cb903e416d41ebf557905c9caed671edf79870295f24a0",
-      "bytes": 60430
+      "sha256": "97dac31b8d69db64ed1c5960e34b1e1d3819e060738fc82f2617ff776a775c46",
+      "bytes": 60431
     },
     "apnic": {
       "url": "https://ftp.apnic.net/stats/apnic/delegated-apnic-latest",
-      "sha256": "7124dfde0b0537517a426e395dff2fa6be9cdd6f8865aedb78135f92ca380c82",
-      "bytes": 4355860
+      "sha256": "b76464fec05645b192c32c94f1078ffb7d6daab852c31e4089270b9810de8edc",
+      "bytes": 4355958
     },
     "17mon": {
       "url": "https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt",
@@ -56,7 +56,7 @@
   "counts": {
     "gfwlist": 6691,
     "chnlist": 109731,
-    "chnroute": 6901
+    "chnroute": 6902
   },
   "applied": true
 }
