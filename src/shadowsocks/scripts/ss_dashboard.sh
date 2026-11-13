@@ -38,7 +38,7 @@ case "$ping_time" in ''|*[!0-9]*) ping_time=0 ;; esac
 if [ "$ping_node" = "$node" ] && [ "$now" -ge "$ping_time" ] && [ $((now - ping_time)) -le 30 ]; then
     ping_value="$ping_result"
 fi
-if [ -n "$pid" ] && [ -n "$node" ] && { [ "$ping_node" != "$node" ] || [ "$now" -lt "$ping_time" ] || [ $((now - ping_time)) -ge 10 ]; }; then
+if [ -n "$pid" ] && [ -n "$node" ] && { [ "$ping_node" != "$node" ] || [ "$now" -lt "$ping_time" ] || [ $((now - ping_time)) -ge 1 ]; }; then
     sh /koolshare/scripts/ss_dashboard_ping.sh "$node" >/dev/null 2>&1 &
 fi
 [ -r "$config" ] || config=/dev/null

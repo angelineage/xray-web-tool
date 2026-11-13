@@ -13,7 +13,7 @@ function tick(){const [id,t]=timers.entries().next().value;timers.delete(id);ass
 const sample={pid:'42',start_ticks:100,name:'NRT-x',ping:'58.493',kind:'vless',network:'xhttp',rss_kb:40960,cpu_ticks:100,total_ticks:1000,cpus:2,uptime:100,traffic_available:true,upload:1000,download:2000};
 window.XwtDashboard.start();now+=200;reply(sample);assert.equal(timers.values().next().value.delay,800);
 assert.equal(text['#xwt-type'],'VLESS / XHTTP');assert.equal(text['#xwt-error'],'');assert.equal(text['#xwt-total-up'],'1000 B');assert.equal(text['#xwt-total-down'],'2.0 KiB');
-assert.equal(text['#xwt-node'],'NRT-x · 58 ms');
+assert.equal(text['#xwt-node'],'NRT-x');assert.equal(text['#xwt-node-ping'],' · 58 ms');
 assert.equal(text['#xwt-memory'],'40.0 MiB');assert.equal(text['#xwt-up'],'采样中…');
 tick();now+=200;reply({...sample,cpu_ticks:200,total_ticks:2000,uptime:101,upload:1200,download:2400});
 assert.equal(text['#xwt-cpu'],'20.0%');assert.equal(text['#xwt-up'],'1.6 Kbps');assert.equal(text['#xwt-down'],'3.2 Kbps');
@@ -28,6 +28,8 @@ assert.equal(text['#xwt-up'],'采样中…');assert.equal(text['#xwt-cpu'],'采�
 tick();const stale=requests.at(-1);window.XwtDashboard.stop();assert.equal(stale.aborted,true);assert.equal(timers.size,0);
 const prior=text['#xwt-node'];stale.options.success({result:{...sample,name:'stale'}});assert.equal(text['#xwt-node'],prior);
 window.XwtDashboard.start();reply({...sample,traffic_available:false});assert.equal(text['#xwt-up'],'统计不可用');
+tick();reply({...sample,ping:'timeout'});assert.equal(text['#xwt-node'],'NRT-x');assert.equal(text['#xwt-node-timeout'],' · 超时');
+tick();reply(sample);assert.equal(text['#xwt-node-timeout'],'');
 document.hidden=true;listeners.visibilitychange();assert.equal(timers.size,0);
 document.hidden=false;visible=false;listeners.visibilitychange();assert.equal(timers.size,0);
 console.log('Dashboard checks passed: rates, CPU, RSS, restarts, stale responses and hidden-page cancellation.');

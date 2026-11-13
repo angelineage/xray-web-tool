@@ -33,7 +33,7 @@ fss_probe_wait_port() {
 }
 
 fss_http_probe() {
-	local url="$1" proxy="$2" family="${3:-4}" limit="${4:-6}"
+	local url="$1" proxy="$2" family="${3:-4}" limit="${4:-6}" connect_limit="${5:-3}"
 	local curl_bin result rc code seconds state ms
 	case "${url}" in
 	http://?*|https://?*) ;;
@@ -53,7 +53,7 @@ fss_http_probe() {
 		set -- "$@" --noproxy '*' --proxy ''
 	fi
 	result="$("${curl_bin}" "$@" -sS -L --max-redirs 3 \
-		--connect-timeout 3 --max-time "${limit}" \
+		--connect-timeout "${connect_limit}" --max-time "${limit}" \
 		--proto '=http,https' --proto-redir '=http,https' \
 		-o /dev/null -w '%{http_code}|%{time_total}' -- "${url}" 2>/dev/null)"
 	rc=$?

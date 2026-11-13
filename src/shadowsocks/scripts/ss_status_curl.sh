@@ -27,10 +27,10 @@ status_curl_snapshot() (
 	[ -n "${frn}" ] || frn="$(get_fancyss_default_furl)"
 	ipv6="$(dbus get ss_basic_proxy_ipv6)"
 	family=any; [ "${ipv6}" = "1" ] && family=4
-	fss_http_probe "${chn}" '' 4 > "${work}/china" & child_c=$!
-	fss_http_probe "${frn}" 127.0.0.1:23456 "${family}" > "${work}/foreign4" & child_f=$!
+	fss_http_probe "${chn}" '' 4 12 6 > "${work}/china" & child_c=$!
+	fss_http_probe "${frn}" 127.0.0.1:23456 "${family}" 12 6 > "${work}/foreign4" & child_f=$!
 	if [ "${ipv6}" = "1" ]; then
-		fss_http_probe "${frn}" 127.0.0.1:23456 6 > "${work}/foreign6" & child_v=$!
+		fss_http_probe "${frn}" 127.0.0.1:23456 6 12 6 > "${work}/foreign6" & child_v=$!
 	fi
 	wait "${child_c}"; wait "${child_f}"
 	[ -z "${child_v}" ] || wait "${child_v}"

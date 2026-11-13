@@ -6150,10 +6150,19 @@ add_vless_node(){
 	local _STRING_1=$(echo "${decode_link}" | awk -F"?" '{print $1}')
 	local _STRING_2=$(echo "${decode_link}" | awk -F"?" '{print $2}')
 
-	x_server_raw=$(echo "${decode_link}" | sed -n 's/.\+@\(.\+:[0-9]\+\).*/\1/p')
-	x_server="${x_server_raw%%:*}"
-	x_server_port="${x_server_raw##*:}"
-	x_uuid="${decode_link%%@*}"
+	# Parse only the URI authority: decoded XHTTP extra may contain :digits.
+	local authority="${1%%\?*}"
+	authority="${authority%%#*}"
+	x_uuid="${authority%%@*}"
+	[ "${authority}" != "${x_uuid}" ] || return 1
+	x_server_raw="${authority#*@}"
+	case "${x_server_raw}" in
+		\[*\]:*) x_server="${x_server_raw%%]*}"; x_server="${x_server#\[}"; x_server_port="${x_server_raw##*:}" ;;
+		*:* ) x_server="${x_server_raw%:*}"; x_server_port="${x_server_raw##*:}" ;;
+		*) return 1 ;;
+	esac
+	case "${x_server_port}" in ''|*[!0-9]*) return 1 ;; esac
+	[ "${x_server_port}" -ge 1 ] 2>/dev/null && [ "${x_server_port}" -le 65535 ] 2>/dev/null || return 1
 	#x_server=$(echo "${x_server_raw}" | awk -F':' '{print $1}')
 	#x_server_port=$(echo "${x_server_raw}" | awk -F':' '{print $2}')
 	#x_uuid=$(echo "${decode_link}" | awk -F"@" '{print $1}')
@@ -6189,8 +6198,10 @@ add_vless_node(){
 	x_grpc_authority=$(sub_uri_query_value "${decode_link}" "authority" | urldecode)
 	x_sni=$(echo "${_STRING_2}"|sed 's/&/\n/g;s/#/\n/g' | grep "sni" | awk -F"=" '{print $2}')
 	x_flow=$(echo "${_STRING_2}"|sed 's/&/\n/g;s/#/\n/g' | grep "flow" | awk -F"=" '{print $2}')
-	x_ai=$(sub_uri_query_bool "${decode_link}" "allowInsecure")
-	[ -z "${x_ai}" ] && x_ai=$(sub_uri_query_bool "${decode_link}" "insecure")
+	local x_ai_raw
+	x_ai_raw=$(sub_uri_query_value "$1" "allowInsecure")
+	[ -n "${x_ai_raw}" ] || x_ai_raw=$(sub_uri_query_value "$1" "insecure")
+	x_ai=$(sub_uri_bool_value "${x_ai_raw}")
 	x_fp=$(echo "${_STRING_2}"|sed 's/&/\n/g;s/#/\n/g' | grep "fp=" | awk -F"=" '{print $2}')
 	x_pbk=$(echo "${_STRING_2}"|sed 's/&/\n/g;s/#/\n/g' | grep "pbk=" | awk -F"=" '{print $2}')
 	x_pcs=$(sub_uri_query_value "${decode_link}" "pcs" | urldecode)
@@ -6206,6 +6217,7 @@ add_vless_node(){
     [ -n "${x_type}" ] || x_type=tcp
     x_sni=$(sub_uri_query_value "$1" sni | urldecode)
     x_remarks=$(printf '%s' "$1" | sed -n 's/^[^#]*#//p' | urldecode)
+    [ -n "${x_remarks}" ] || x_remarks="${x_server}"
     x_xhttp_extra=""
 	case ${x_type} in
 	tcp)
@@ -6316,7 +6328,8 @@ add_vless_node(){
 		else
 			x_alpn_http=""
 		fi
-		[ "${SUB_AI}" == "1" ] && x_ai="1"
+		# Subscription policy applies only to subscription imports, not pasted links.
+		[ "${action}" = "1" ] && [ "${SUB_AI}" = "1" ] && x_ai="1"
 	elif [ "${x_security}" == "reality" ];then
 		# fingerprint, reality must have fp
 		if [ -z "${x_fp}" ];then

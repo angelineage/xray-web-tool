@@ -19,6 +19,10 @@
 <link rel="stylesheet" type="text/css" href="/res/softcenter.css">
 <link rel="stylesheet" type="text/css" href="/res/xwt-ui.css">
 <style type="text/css">
+.xwt-site-card{position:relative;overflow:hidden}.xwt-site-card>*:not(.xwt-site-spark){position:relative;z-index:1}.xwt-site-icon svg{width:21px;height:21px}.xwt-site-spark{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.28}.xwt-site-spark path{fill:none;stroke:#70d77b;stroke-width:1.5;vector-effect:non-scaling-stroke}.xwt-site-name{overflow:hidden;text-overflow:ellipsis}.xwt-site-name small{display:block;white-space:nowrap}.xwt-site-card{gap:5px;padding:8px}.xwt-site-icon{flex-basis:28px;height:28px}.xwt-site-name{font-size:11px;overflow:visible;word-break:keep-all;overflow-wrap:normal}.xwt-site-value{font-size:14px}
+
+.xwt-site-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}.xwt-site-card{display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #45585e;border-radius:8px;background:#26383d;min-width:0}.xwt-site-icon{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:8px;background:#394b50;color:#75b9e8;font-weight:bold}.xwt-site-name{flex:1;min-width:0;font-weight:bold}.xwt-site-name small{color:#55d9c5;font-size:10px}.xwt-site-value{white-space:nowrap;color:#ffcc00;font-size:18px;font-weight:bold}.xwt-site-value.good{color:#71d377}.xwt-site-value.medium{color:#ffb652}.xwt-site-value.slow,.xwt-site-value.unavailable{color:#f17c6e}.xwt-site-note{display:block;margin-top:8px;color:#b8c7ca}@media(max-width:900px){.xwt-site-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:500px){.xwt-site-grid{grid-template-columns:1fr}}
+
 #tablet_11 > div, #tablet_11 > div > div, #tablet_11 > small, #tablet_11 .xwt-counter { color:#eee !important; }
 #tablet_11 strong, #tablet_11 .xwt-counter-value { color:#ffcc00 !important; }
 
@@ -669,6 +673,7 @@ body[skin="TS"] select option {
 	background: #0f1a1e;
 	color: #cffafe;
 }
+.xwt-site-card{gap:5px;padding:8px}.xwt-site-icon{flex-basis:28px;height:28px}.xwt-site-name{font-size:11px;overflow:visible;word-break:keep-all;overflow-wrap:normal}.xwt-site-name small{display:block;white-space:nowrap}.xwt-site-value{font-size:14px}
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/layer/layer.js"></script>
@@ -683,7 +688,8 @@ body[skin="TS"] select option {
 <script type="text/javascript" src="/res/ac3100-version.js"></script>
 <script type="text/javascript" src="/res/ac3100-log-viewer.js?v=0.1.2"></script>
 <script type="text/javascript" src="/res/xwt-chart.js?v=20261110-3"></script>
-<script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261110-11"></script>
+<script type="text/javascript" src="/res/xwt-latency.js?v=8"></script>
+<script type="text/javascript" src="/res/xwt-dashboard.js?v=dashboard-20261113-3"></script>
 <script language="JavaScript" type="text/javascript" src="/res/ss-menu.js?v=branding-20261105"></script>
 <script language="JavaScript" type="text/javascript" src="/res/dns_servers.json.js"></script>
 <script language="JavaScript" type="text/javascript" src="/res/shunt_manifest.json.js"></script>
@@ -15208,13 +15214,15 @@ function toggleKeyMask(o, show){
 											<div id="tablet_11" style="display:none;padding:16px;background:#303f44;border-radius:6px;color:#eee;">
 <div id="xwt-error" role="status"></div>
 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;">
-<div>当前节点<strong id="xwt-node" style="display:block;font-size:20px">—</strong></div>
+<div>当前节点<div style="font-size:16px;font-weight:bold"><strong id="xwt-node">—</strong><span id="xwt-node-ping" style="font-size:12px;color:#ffcc00"></span><span id="xwt-node-timeout" style="color:#ff6262;font-size:12px"></span></div></div>
 <div>代理协议<strong id="xwt-type" style="display:block">—</strong></div>
 <div>内存（RSS）<strong id="xwt-memory" style="display:block;font-size:24px">—</strong></div>
 <div>代理上传速率<strong id="xwt-up" style="display:block;font-size:24px;color:#ffcc00">—</strong><span class="xwt-counter">上传 <span id="xwt-total-up" class="xwt-counter-value">—</span></span></div>
 <div>代理下载速率<strong id="xwt-down" style="display:block;font-size:24px;color:#ffcc00">—</strong><span class="xwt-counter">下载 <span id="xwt-total-down" class="xwt-counter-value">—</span></span></div>
 <div>进程 CPU（单核 100%）<strong id="xwt-cpu" style="display:block;font-size:24px">—</strong></div>
 </div>
+<div class="xwt-site-grid"><div class="xwt-site-card"><span class="xwt-site-icon"><svg viewBox="0 0 24 24"><path fill="#1688ff" d="M2 3h3v18H2zm6 8h3v10H8zm6-5h3v15h-3zm6-4h3v20h-3z"/></svg></span><span class="xwt-site-name">抖音 <small>国内</small>
+</span><span id="xwt-site-0" class="xwt-site-value">检测中</span><svg class="xwt-site-spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path id="xwt-site-path-0" d=""/></svg></div><div class="xwt-site-card"><span class="xwt-site-icon"><svg viewBox="0 0 24 24"><path fill="#09bf48" d="M9 3C4 3 1 6 1 10c0 2 1 4 3 5l-.5 2.3 2.7-1.3a10 10 0 003 .5c-.4-4.5 3.4-7.4 8-7.3C16.7 5.7 13.4 3 9 3zm-3 5h1v1H6zm6 0h1v1h-1zm6 2c-4 0-7 2.4-7 5.3s3 5.2 7 5.2c.8 0 1.5-.1 2.2-.3l2 1-.4-1.8c1.4-1 2.2-2.4 2.2-4.1 0-2.9-2.7-5.3-6-5.3zm-2 4h1v1h-1zm4 0h1v1h-1z"/></svg></span><span class="xwt-site-name">微信 <small>国内</small></span><span id="xwt-site-1" class="xwt-site-value">检测中</span><svg class="xwt-site-spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path id="xwt-site-path-1" d=""/></svg></div><div class="xwt-site-card"><span class="xwt-site-icon"><svg viewBox="0 0 24 24"><text x="2" y="19" font-size="18" font-weight="bold" fill="#ff7a20">淘</text></svg></span><span class="xwt-site-name">淘宝 <small>国内</small></span><span id="xwt-site-2" class="xwt-site-value">检测中</span><svg class="xwt-site-spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path id="xwt-site-path-2" d=""/></svg></div><div class="xwt-site-card"><span class="xwt-site-icon"><svg viewBox="0 0 24 24"><path fill="#eee" d="M12 .8a11.2 11.2 0 00-3.5 21.8c.6.1.8-.2.8-.5v-2c-3.1.7-3.8-1.3-3.8-1.3-.5-1.3-1.2-1.7-1.2-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1 1.6-.5 1.8-.8.1-.6.4-1.1.7-1.4-2.5-.3-5.1-1.2-5.1-5.5 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.4.1-3 0 0 1-.3 3.2 1.2a11 11 0 015.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.7.1 3 .8.8 1.2 1.8 1.2 3.1 0 4.3-2.6 5.2-5.1 5.5.4.4.8 1 .8 2.1v3.6c0 .3.2.6.8.5A11.2 11.2 0 0012 .8z"/></svg></span><span class="xwt-site-name">GitHub <small>国际</small></span><span id="xwt-site-3" class="xwt-site-value">检测中</span><svg class="xwt-site-spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path id="xwt-site-path-3" d=""/></svg></div><div class="xwt-site-card"><span class="xwt-site-icon"><svg viewBox="0 0 24 24"><path fill="#eee" d="M3 3h5.5l4.4 5.9L18 3h2l-6.2 7.3L21 21h-5.5l-4.9-6.7L5 21H3l6.7-8zM7.5 4.6h-1l9.9 14.8h1z"/></svg></span><span class="xwt-site-name">X.com <small>国际</small></span><span id="xwt-site-4" class="xwt-site-value">检测中</span><svg class="xwt-site-spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path id="xwt-site-path-4" d=""/></svg></div><div class="xwt-site-card"><span class="xwt-site-icon"><svg viewBox="0 0 24 24"><path fill="#ff2424" d="M22 7a3 3 0 00-2-2C18 4.5 6 4.5 4 5a3 3 0 00-2 2 25 25 0 000 10 3 3 0 002 2c2 .5 14 .5 16 0a3 3 0 002-2 25 25 0 000-10z"/><path fill="white" d="M10 8.5v7l6-3.5z"/></svg></span><span class="xwt-site-name">YouTube <small>国际</small></span><span id="xwt-site-5" class="xwt-site-value">检测中</span><svg class="xwt-site-spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path id="xwt-site-path-5" d=""/></svg></div></div>
 <div style="margin-top:18px;padding:14px;border-radius:5px;background:#27383d;">
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;color:#eee">
 <span style="flex:1"></span>

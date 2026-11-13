@@ -13,9 +13,9 @@
         return n.toFixed(i?1:0)+' '+units[i];
     }
     function active(){return !document.hidden && $('#tablet_11').is(':visible');}
-    function stop(){generation++;if(timer!==null)clearTimeout(timer);timer=null;var xhr=pending;pending=null;if(xhr)xhr.abort();if(previous&&root.XwtChart)root.XwtChart.add(null,null);previous=null;}
+    function stop(){if(root.XwtLatency)root.XwtLatency.stop();generation++;if(timer!==null)clearTimeout(timer);timer=null;var xhr=pending;pending=null;if(xhr)xhr.abort();if(previous&&root.XwtChart)root.XwtChart.add(null,null);previous=null;}
     function start(){
-        stop();var token=generation,healthy=false;
+        stop();if(root.XwtLatency)root.XwtLatency.start();var token=generation,healthy=false;
         if(root.XwtChart)root.XwtChart.draw();
         function again(started){if(token===generation&&active())timer=setTimeout(tick,healthy?Math.max(0,1000-(Date.now()-started)):5000);}
         function tick(){
@@ -28,8 +28,10 @@
                     if(token!==generation||!active())return;
                     try{
                         var s=FssLogViewer.decode(response.result),same=previous&&s.pid&&s.pid===previous.pid&&s.start_ticks===previous.start_ticks;
-                        var ping=s.ping&&s.ping!=='unavailable'?(s.ping==='timeout'?' · ping 超时':' · '+Math.round(Number(s.ping))+' ms'):'';
-                        $('#xwt-node').text((s.name||'未选择节点')+ping);
+                        var ping=s.ping&&s.ping!=='unavailable'&&s.ping!=='timeout'?' · '+Math.round(Number(s.ping))+' ms':'';
+                        $('#xwt-node-timeout').text(s.ping==='timeout'?' · 超时':'');
+                        $('#xwt-node').text(s.name||'未选择节点');
+                        $('#xwt-node-ping').text(ping);
                         $('#xwt-type').text([s.kind,s.network].filter(Boolean).map(function(v){return String(v).toUpperCase();}).join(' / ')||'—');
                         $('#xwt-memory').text(s.pid?bytes(s.rss_kb*1024):'—');
                         var cpu=same&&s.total_ticks>previous.total_ticks?Math.max(0,(s.cpu_ticks-previous.cpu_ticks)/(s.total_ticks-previous.total_ticks)*s.cpus*100):null;

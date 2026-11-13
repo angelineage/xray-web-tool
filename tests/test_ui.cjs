@@ -218,3 +218,13 @@ assert.equal(proxyCalls.at(-1).fields.fss_node_current,'3');
 assert.match(html,/onclick="set_proxy_enabled\(true\)" value="应用"/);
 assert.match(html,/onclick="save_and_apply_account_node\(\)" value="保存&应用"/);
 console.log('Proxy controls passed: selection fallback, runtime-only requests, account save and apply, and shunt guards.');
+
+// Dashboard cards must remain outside the traffic chart and match the probe list.
+const dashboardHtml=html.slice(html.indexOf('<div id="tablet_11"'),html.indexOf('<div id="add_fancyss_node"'));
+assert(dashboardHtml.indexOf('class="xwt-site-grid"') < dashboardHtml.indexOf('id="xwt-chart"'));
+assert.equal((dashboardHtml.match(/class="xwt-site-card"/g)||[]).length,6);
+assert(!dashboardHtml.includes('xwt-site-note'));
+const latencySource=fs.readFileSync(root+'/res/xwt-latency.js','utf8');
+assert(latencySource.includes('abs.twimg.com/favicons/twitter.3.ico'));
+assert(!latencySource.includes('www.weixin.qq.com'));
+console.log('Latency cards: six probes and chart layout verified.');
