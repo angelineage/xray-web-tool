@@ -8,20 +8,20 @@
   },
   "chnlist": {
     "name": "chnlist.gz",
-    "date": "2026-11-03 23:22",
-    "md5": "3544c71242e9d26cdceb0c056969ce77",
-    "count": "109731",
+    "date": "2026-11-13 09:22",
+    "md5": "0903fcbfc77d389efc7c43fab67230e3",
+    "count": "109831",
     "note": "merged from dnsmasq-china-list",
-    "sha256": "df2b6fa7b3198f5b38037099710be87c3d26214d524fc2a56ec5a27cbbacd3f1"
+    "sha256": "df9b2e90b9d2c863127fe0cfc64e1698a36983c5fbe63967f54251d937a69c89"
   },
   "chnroute": {
     "name": "chnroute.txt",
-    "date": "2026-11-12 09:58",
-    "md5": "a206acc9a5f133988addf0e407b87d0d",
-    "count": "6902",
-    "count_ip": "357073336",
+    "date": "2026-11-13 09:22",
+    "md5": "44545265f4cc15f29d225c24c5bfc6d1",
+    "count": "6907",
+    "count_ip": "357086136",
     "source": "merged",
-    "sha256": "2528e8740b0c033ed95c6abad6abd4e98b4c647116a6a12c187f68ec2cc73098"
+    "sha256": "7340eaf3662af1c5042c2466acdc39399767b403d0045da46321983ed2c752ca"
   },
   "chnroute6": {
     "name": "chnroute6.txt",
