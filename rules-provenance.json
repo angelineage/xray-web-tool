@@ -1,21 +1,21 @@
 {
-  "fetched_at_utc": "2026-11-14T00:58:29.455870+00:00",
+  "fetched_at_utc": "2026-11-15T00:06:50.123546+00:00",
   "policy": "upstream-merged-v1",
   "sources": {
     "gfw_abp": {
       "url": "https://raw.githubusercontent.com/Loukky/gfwlist-by-loukky/master/gfwlist.txt",
-      "sha256": "bac93c379ccf9a9a370a4210507962b7919ca8eca2c7b0f629ed15c5d0808bfe",
-      "bytes": 111467
+      "sha256": "724773d0eedb2deeb08a3896ed666a8704d1dc4ee0802c4287f07b32f44e3d39",
+      "bytes": 111492
     },
     "gfw_extra": {
       "url": "https://raw.githubusercontent.com/pexcn/daily/gh-pages/gfwlist/gfwlist.txt",
-      "sha256": "8fd5413a538c850d01eb9069722e7607ac0bb1ac1624950c631960e31674c24d",
+      "sha256": "029eb12e58c5b68485b323973e98c2bf6ae1b6d72691050e6f4fbce90f0f90ea",
       "bytes": 59868
     },
     "china": {
       "url": "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf",
-      "sha256": "19fd25c96a6b815ee804aa1124cfc8e08e2af5a787c36a2d4c28a80c6594013d",
-      "bytes": 4015230
+      "sha256": "614aa9da0bc26c4d956778ffc0657ac21cfde87f869d5c2430d660d5dd1dbb59",
+      "bytes": 4013247
     },
     "apple": {
       "url": "https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/apple.china.conf",
@@ -29,12 +29,12 @@
     },
     "misaka": {
       "url": "https://raw.githubusercontent.com/misakaio/chnroutes2/master/chnroutes.txt",
-      "sha256": "39a99075f84eb7a2627e541b429f01d573bdc463e2e0671841f3a7cd53460fc1",
+      "sha256": "9d5ba083a2f915ba4f9ae4bc86b1d1d89fc4d70a1e4c30b9759ab84338861987",
       "bytes": 60509
     },
     "apnic": {
       "url": "https://ftp.apnic.net/stats/apnic/delegated-apnic-latest",
-      "sha256": "e75f6589f995071cefee1db4e1507481ee36ba433d0c0a102230291e423cd242",
+      "sha256": "374e3b533b3b9cd0e7f10567e98c435517d62e44e64338176fb13d016f223c92",
       "bytes": 4357224
     },
     "17mon": {
@@ -54,8 +54,8 @@
     }
   },
   "counts": {
-    "gfwlist": 6692,
-    "chnlist": 109831,
+    "gfwlist": 6693,
+    "chnlist": 109782,
     "chnroute": 6906
   },
   "applied": true
