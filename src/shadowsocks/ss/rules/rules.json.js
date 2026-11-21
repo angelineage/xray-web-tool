@@ -1,10 +1,10 @@
 {
   "gfwlist": {
     "name": "gfwlist.gz",
-    "date": "2026-11-15 08:06",
-    "md5": "701889eadcbaeb03fc55f277acb8cd64",
-    "count": "6693",
-    "sha256": "b5ff68ec34186be1e08ce2b7fa3339cabc693f288b90c721401084523ce78949"
+    "date": "2026-11-21 09:40",
+    "md5": "93a90f54dde39a58f3abf0cc24f2c3c8",
+    "count": "6709",
+    "sha256": "b470de8ee1c445950b8571ebc14378ac399cf827e412e567694eb9e9ba2052d7"
   },
   "chnlist": {
     "name": "chnlist.gz",
@@ -16,12 +16,12 @@
   },
   "chnroute": {
     "name": "chnroute.txt",
-    "date": "2026-11-17 11:04",
-    "md5": "f7d0da12f0ad3ce4e363cf0071536e84",
-    "count": "6917",
-    "count_ip": "357092792",
+    "date": "2026-11-21 09:40",
+    "md5": "a48a1f9552a44865d66ca2d44219fd8f",
+    "count": "6916",
+    "count_ip": "357092536",
     "source": "merged",
-    "sha256": "e7074928dba04e9596cd9e91eea8ce2b68252c951bededdbbebc4da5a26e68e3"
+    "sha256": "55437a46ed2425d0c15278eca5cf89fe6d3a5285d32d6ca2bd978152aa1cae37"
   },
   "chnroute6": {
     "name": "chnroute6.txt",
