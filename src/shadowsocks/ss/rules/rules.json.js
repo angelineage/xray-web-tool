@@ -16,12 +16,12 @@
   },
   "chnroute": {
     "name": "chnroute.txt",
-    "date": "2026-11-26 10:59",
-    "md5": "0eed3c2c5689b99822c61b7f8729274c",
-    "count": "6916",
-    "count_ip": "357091000",
+    "date": "2026-11-27 11:07",
+    "md5": "c203e3742c2392c26e10a7d2e1cde613",
+    "count": "6917",
+    "count_ip": "357091512",
     "source": "merged",
-    "sha256": "a881e4cba25e4a5ac0bb3dd6f2b2fc85470252e8992df61bbfd8918e3ef7ec2f"
+    "sha256": "ad3e2d5fe63feae634fb48fa85367235e1638ffd9f64e9c68aeb261a978a0f72"
   },
   "chnroute6": {
     "name": "chnroute6.txt",
