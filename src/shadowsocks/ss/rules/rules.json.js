@@ -1,10 +1,10 @@
 {
   "gfwlist": {
     "name": "gfwlist.gz",
-    "date": "2026-11-21 09:40",
-    "md5": "93a90f54dde39a58f3abf0cc24f2c3c8",
-    "count": "6709",
-    "sha256": "b470de8ee1c445950b8571ebc14378ac399cf827e412e567694eb9e9ba2052d7"
+    "date": "2026-11-28 10:53",
+    "md5": "15cffcea11941a969a0edfa2ba454d4b",
+    "count": "6712",
+    "sha256": "967767bf73d3bbc0830977eddfbf153cc41af351b77dd67c7563af4b9c22165d"
   },
   "chnlist": {
     "name": "chnlist.gz",
